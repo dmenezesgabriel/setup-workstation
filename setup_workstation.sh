@@ -22,7 +22,7 @@ echo "System architecture: $ARCH"
 # -------------------------------------------------------------------------------------------------------------------------------------------------- #
 
 echo "Installing dependencies"
-sudo apt-get -qq update && sudo apt-get -qq install --no-install-recommends -y gcc git zsh curl vim tmux htop python3-venv python3-pip libffi-dev python3-dev make
+sudo apt-get -qq update && sudo apt-get -qq install --no-install-recommends -y gcc git zsh curl vim tmux htop python3-venv python3-pip libffi-dev python3-dev make default-jre
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------- #
 # Custom
