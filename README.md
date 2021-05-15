@@ -1,14 +1,5 @@
 # Setup Workstation
 
-Setup essential tools for ubuntu long day rides!
+Useful installation scripts for linux
 
-## Tools
-
-- curl
-- git
-- vim
-- tmux
-- htop
-- oh my zsh
-- docker
-- docker-compose
+> :warning: **Work in progress**: Some scripts may not be finished!
