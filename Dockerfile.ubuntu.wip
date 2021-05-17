@@ -1,8 +1,8 @@
 FROM ubuntu:20.04
 
-COPY ./setup_workstation.sh /
+COPY ./ubuntu /
 
-RUN [ "chmod", "+x", "./setup_workstation.sh" ]
+# RUN [ "chmod", "+x", "./setup_workstation.sh" ]
 
 RUN echo "Updating"
 
