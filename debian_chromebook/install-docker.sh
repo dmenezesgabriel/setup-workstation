@@ -34,26 +34,27 @@ echo "You may be asked to input your administrator 'sudo password' ... "
 echo "Installing prerequisites"
 
 # Update the apt package index and install packages to allow apt to use a repository over HTTPS
- sudo apt-get update
- sudo apt-get install \
+ sudo apt-get update -y
+ sudo apt-get install -y \
     apt-transport-https \
     ca-certificates \
     curl \
     gnupg \
-    lsb-release
+    lsb-release \
+    software-properties-common
 
 echo
 echo "Download and install Docker"
 # --------------------------------------------------------------------------- #
-# Add Docker’s official GPG key
-# --------------------------------------------------------------------------- #
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-# --------------------------------------------------------------------------- #
 # Set up the stable repository
 # --------------------------------------------------------------------------- #
-echo \
-  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian \
+   $(lsb_release -cs) \
+   stable"
+# --------------------------------------------------------------------------- #
+# Add Docker’s official GPG key
+# --------------------------------------------------------------------------- #
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
 # --------------------------------------------------------------------------- #
 # Install Docker
 # --------------------------------------------------------------------------- #
