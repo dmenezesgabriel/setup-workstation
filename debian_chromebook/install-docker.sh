@@ -1,6 +1,11 @@
 #!/bin/bash
+# --------------------------------------------------------------------------- #
+# Docker installation script for Chromebooks
+# --------------------------------------------------------------------------- #
 set -e
-
+# --------------------------------------------------------------------------- #
+# Instructions
+# --------------------------------------------------------------------------- #
 cat << EOF
 
 This is a script to install Docker on Debian linux systems.
@@ -12,17 +17,20 @@ This will:
 1. Install docker system dependencies
 
 EOF
-
-read -p "Ṕress Enter to continue ... or ctrl-c to cancel." START
+# --------------------------------------------------------------------------- #
+read -p "Press Enter to continue ... or ctrl-c to cancel." START
 echo
-
+# --------------------------------------------------------------------------- #
+# Remove already installed previous versions
+# --------------------------------------------------------------------------- #
 echo
 echo "Removing already installed previous versions"
 echo "You may be asked to input your administrator 'sudo password' ... "
-
+# --------------------------------------------------------------------------- #
 # # Remove old versions
+# --------------------------------------------------------------------------- #
 # sudo apt-get remove docker docker-engine docker.io containerd runc
-
+# --------------------------------------------------------------------------- #
 echo "Installing prerequisites"
 
 # Update the apt package index and install packages to allow apt to use a repository over HTTPS
@@ -36,25 +44,30 @@ echo "Installing prerequisites"
 
 echo
 echo "Download and install Docker"
-
+# --------------------------------------------------------------------------- #
 # Add Docker’s official GPG key
+# --------------------------------------------------------------------------- #
 curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
+# --------------------------------------------------------------------------- #
 # Set up the stable repository
+# --------------------------------------------------------------------------- #
 echo \
   "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-
+# --------------------------------------------------------------------------- #
+# Install Docker
+# --------------------------------------------------------------------------- #
 sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io"
-
+sudo apt-get install docker-ce docker-ce-cli containerd.io
+# --------------------------------------------------------------------------- #
 echo
 echo "Finished."
 echo
-
+# --------------------------------------------------------------------------- #
 read -p "Press Enter to run the 'Hello World' Docker container as a test: " START
 echo
-
-# 
-docker run hello-world
+# --------------------------------------------------------------------------- #
+# Test installation
+# --------------------------------------------------------------------------- #
+sudo docker run hello-world
+# --------------------------------------------------------------------------- #
