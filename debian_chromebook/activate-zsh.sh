@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 # Add the code below to /home/gabriel/.bashrc
 if [[ $- != *i* ]] ; then
   # Shell is non-interactive.  Be done now!
