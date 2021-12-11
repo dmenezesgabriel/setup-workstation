@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 # --------------------------------------------------------------------------- #
 # Create python general virtual environment
 # --------------------------------------------------------------------------- #
@@ -13,13 +13,13 @@ python3 -m venv ~/environments/general
 echo "Installing default python libs"
 sudo apt-get -qq install -y python3-pip
 
-~/environments/general/bin/pip install black isort pylama flake8 pytest wheel
+~/environments/general/bin/pip install black isort flake8 pytest wheel
 
 echo "Adding custom configs to ~/.zshrc"
 # --------------------------------------------------------------------------- #
 # Custom configuration at zshrc
 # --------------------------------------------------------------------------- #
-cat <<'EOF' >> ~/.zshrc
+cat <<'EOF' >> ~/.bashrc
 ## Custom ##
 # Activate Python general virtual environment
 alias generalenv="source ~/environments/general/bin/python3"
@@ -33,4 +33,4 @@ EOF
 # --------------------------------------------------------------------------- #
 # Reload shell config
 # --------------------------------------------------------------------------- #
-. ~/.zshrc
+. ~/.bashrc

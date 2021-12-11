@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 # --------------------------------------------------------------------------- #
 # Docker installation script for Chromebooks
 # --------------------------------------------------------------------------- #
@@ -8,7 +8,7 @@ set -e
 # --------------------------------------------------------------------------- #
 cat << EOF
 
-This is a script to install Docker on Debian linux systems.
+This is a script to install Docker on Debian linux syste'ms.
 The installation also can be done on some chromebooks using linux
 
 This will:

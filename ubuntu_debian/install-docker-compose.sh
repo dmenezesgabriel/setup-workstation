@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 # --------------------------------------------------------------------------- #
 # Install docker compose
 # --------------------------------------------------------------------------- #
@@ -8,5 +8,6 @@ sudo apt-get -qq update && sudo apt-get -qq install -y libffi-dev
 
 echo "Install Docker Compose with pip"
 # Install Docker Compose
+# TODO upgrade pip
 ~/environments/general/bin/pip install docker-compose
 # --------------------------------------------------------------------------- #
