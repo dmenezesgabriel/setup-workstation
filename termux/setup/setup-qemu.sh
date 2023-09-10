@@ -1,6 +1,9 @@
 #!/bin/bash
 
-. ./config.env
+echo "$(ls -lh)"
+
+. config.env
+
 echo "Disk Size: $DISK_SIZE"
 echo "Download url: $ALPINE_ISO_URL"
 echo "Alpine file: $ALPINE_ISO_FILE"
