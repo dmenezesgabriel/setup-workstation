@@ -1,7 +1,7 @@
 # Wait enough (forever) until a long-time boot
 set timeout -1
 
-set answerfile [exec cat /data/data/com.termux/files/home/setup/alpine-setup.conf]
+set answerfile [exec cat $env(ALPINE_PATH)/alpine-setup.conf]
 
 #
 # install the system
@@ -11,6 +11,9 @@ spawn qemu-img create -f qcow2 $env(ALPINE_PATH)/alpine.qcow2 $env(DISK_SIZE)
 expect "Formatting '$env(ALPINE_PATH)/alpine.qcow2', fmt=qcow2 size=$env(DISK_SIZE)"
 
 spawn qemu-system-x86_64 -m 1024 \
+                         -smp cpus=2 \
+                         -netdev user,id=n1,hostfwd=tcp::2222-:22 \
+                         -device virtio-net,netdev=n1 \
                          -cdrom $env(ALPINE_PATH)/$env(ALPINE_ISO_FILE) \
                          -boot d \
                          -nographic $env(ALPINE_PATH)/alpine.qcow2
