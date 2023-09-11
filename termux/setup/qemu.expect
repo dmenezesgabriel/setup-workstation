@@ -38,13 +38,9 @@ send "$env(ROOT_PASSWORD)\n"
 expect "Retype password: "
 send "$env(ROOT_PASSWORD)\n"
 
-# Setup user
-expect "\[y\]"
-send "no\r"
-
-# Erase disk
 expect "\[n\]"
 send "y\r"
+
 
 expect "Please reboot"
 send "halt\r"

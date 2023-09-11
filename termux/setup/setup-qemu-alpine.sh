@@ -7,8 +7,8 @@ export ALPINE_PATH=~/alpine
 export SSH_PATH=~/.ssh
 export DISK_SIZE=10G
 export ROOT_PASSWORD=secret123
-export ALPINE_ISO_FILE=alpine-virt-3.18.3-x86_64.iso
-export ALPINE_ISO_URL=https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/$ALPINE_ISO_FILE
+export ALPINE_ISO_FILE=alpine-virt-3.14.0-x86_64.iso
+export ALPINE_ISO_URL=https://dl-cdn.alpinelinux.org/alpine/v3.14/releases/x86_64/$ALPINE_ISO_FILE
 
 echo -e "=========== Environment ===========\n"
 
