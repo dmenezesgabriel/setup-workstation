@@ -3,7 +3,9 @@ services:
     image: termux/termux-docker:latest
     ports:
       - 8022:8022
+      - 8888:8888
     volumes:
+      # - ./app_data/home:/data/data/com.termux/files/home
       - ./setup:/data/data/com.termux/files/home/setup
     environment:
       - TERMUX_UID=1000

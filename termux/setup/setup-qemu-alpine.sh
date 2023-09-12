@@ -10,14 +10,14 @@ export ROOT_PASSWORD=secret123
 export ALPINE_ISO_FILE=alpine-virt-3.14.0-x86_64.iso
 export ALPINE_ISO_URL=https://dl-cdn.alpinelinux.org/alpine/v3.14/releases/x86_64/$ALPINE_ISO_FILE
 
-echo -e "=========== Environment ===========\n"
+echo "=========== Environment ===========\n"
 
 echo "Disk Size: $DISK_SIZE"
 echo "Download url: $ALPINE_ISO_URL"
 echo "Alpine file: $ALPINE_ISO_FILE"
 echo "Alpine path: $ALPINE_PATH"
 
-echo -e "=========== Install dependencies ===========\n"
+echo "=========== Install dependencies ===========\n"
 
 apt update -q
 apt install -yq qemu-system-x86-64-headless \
@@ -27,7 +27,7 @@ apt install -yq qemu-system-x86-64-headless \
                expect
 
 
-echo -e "=========== Download Alpine ===========\n"
+echo "=========== Download Alpine ===========\n"
 
 rm -r $ALPINE_PATH
 
@@ -45,11 +45,11 @@ rm -r $SSH_PATH
 
 mkdir -p $SSH_PATH
 
-echo -e "=========== Run expect file ===========\n"
+echo "=========== Run expect file ===========\n"
 
 expect -f qemu.expect
 
-echo -e "=========== Create alpine.sh ===========\n"
+echo "=========== Create alpine.sh ===========\n"
 
 echo "qemu-system-x86_64 -m 1024 -netdev user,id=n1,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic $ALPINE_PATH/alpine.qcow2" >> $ALPINE_PATH/alpine.sh
 
