@@ -22,42 +22,68 @@ apt install --fix-policy -y build-essential \
                libffi \
                binutils \
                libzmq \
+               libjpeg-turbo \
                python \
                python-pip \
                python-numpy \
                python-pandas \
+               python-pyarrow \
+               python-scipy \
 
 echo "\nPython version: $(python --version)"
 echo "\nPython global libs: \n$(python -m pip freeze)"
 
-echo -e "=========== Create streamlit app ===========\n"
+echo "=========== Create pydata directory ===========\n"
 
 rm -r $PYDATA_PATH
 mkdir -p $PYDATA_PATH
-``
+
+cp requirements.txt $PYDATA_PATH
+
 cd $PYDATA_PATH
 
-echo -e "=========== Install Python Packages ===========\n"
+echo "=========== Create virtual environment ===========\n"
 
-rm -r venv
 python -m venv --system-site-packages venv
 
 export MATHLIB="m"
 
-export LDFLAGS="-lpython3.11"
-
-export CFLAGS="-w"
-
-# venv/bin/python -m pip install --no-cache-dir numpy==1.19.3
-# venv/bin/python -m pip install --no-cache-dir pandas==1.3.0
-# venv/bin/python -m pip install --no-cache-dir pillow==7.1.0
-
+export LDFLAGS=" -lpython3.11 -lm"
 
 echo "$(venv/bin/python -c 'import numpy; print(numpy.__version__)')"
 
 echo "$(venv/bin/python -c 'import pandas; print(pandas.__version__)')"
 
+echo "$(venv/bin/python -c 'import pyarrow; print(pyarrow.__version__)')"
+
+echo "=========== Update setup tools and wheel ===========\n"
+
 venv/bin/python -m pip install --upgrade pip setuptools wheel
+
+echo "=========== Install jupyterlab ===========\n"
+
 venv/bin/python -m pip install --upgrade jupyterlab jupyterlab-git
 
-venv/bin/python -m pip install streamlit
+echo "=========== Install Streamlit ===========\n"
+
+venv/bin/python -m pip install typing-extensions
+venv/bin/python -m pip install altair==5.1.1
+venv/bin/python -m pip install blinker==1.6.2
+venv/bin/python -m pip install cachetools==5.3.1
+venv/bin/python -m pip install click==8.1.7
+venv/bin/python -m pip install gitpython==3.1.36
+venv/bin/python -m pip install importlib-metadata
+venv/bin/python -m pip install pillow==10.0.0
+venv/bin/python -m pip install protobuf==4.23.3
+venv/bin/python -m pip install toml==0.10.2
+venv/bin/python -m pip install pydeck==0.8.0
+venv/bin/python -m pip install pympler==1.0.1
+venv/bin/python -m pip install requests==2.31.0
+venv/bin/python -m pip install rich==13.5.2
+venv/bin/python -m pip install tenacity==8.2.3
+venv/bin/python -m pip install tornado==6.3.3
+venv/bin/python -m pip install tzlocal==5.0.1
+venv/bin/python -m pip install validators==0.22.0
+venv/bin/python -m pip install watchdog==3.0.0
+
+venv/bin/python -m pip install --no-cache-dir --no-dependencies streamlit

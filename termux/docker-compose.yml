@@ -4,6 +4,7 @@ services:
     ports:
       - 8022:8022
       - 8888:8888
+      - 8501:8501
     volumes:
       # - ./app_data/home:/data/data/com.termux/files/home
       - ./setup:/data/data/com.termux/files/home/setup
