@@ -24,6 +24,9 @@ set qemuID $spawn_id
 expect "localhost login:"
 send "root\r"
 
+expect "localhost:~#"
+send "export MIRRORS='http://dl-cdn.alpinelinux.org/alpine/ http://uk.alpinelinux.org/alpine/ http://dl-2.alpinelinux.org/alpine/'"
+
 # Create answerfile
 expect "localhost:~#"
 send "echo '$answerfile' > answerfile\r"
