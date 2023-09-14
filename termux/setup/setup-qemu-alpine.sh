@@ -24,7 +24,8 @@ apt install -yq qemu-system-x86-64-headless \
                openssh \
                qemu-utils \
                wget \
-               expect
+               expect \
+               root-repo
 
 
 echo "\n=========== Download Alpine ===========\n"
@@ -58,10 +59,14 @@ expect -f qemu.expect
 
 echo "\n=========== Create alpine.sh ===========\n"
 
-echo "qemu-system-x86_64 -m 2040 -cpu max -netdev user,id=n1,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic $ALPINE_PATH/alpine.qcow2" >> $ALPINE_PATH/alpine.sh
+echo "qemu-system-x86_64 -m 2040 -cpu max -netdev user,id=n1,hostfwd=tcp::2222-:22,hostfwd=tcp::2375-:2375 -device virtio-net,netdev=n1 -nographic $ALPINE_PATH/alpine.qcow2" >> $ALPINE_PATH/alpine.sh
 
 end_time=$(date +%s)
 
 elapsed_time=$((end_time - start_time))
+
+echo "\n=========== export Docker Host ===========\n"
+
+echo "export DOCKER_HOST=tcp://localhost:2375" >> ~/.bashrc ; bash
 
 echo "Elapsed time: $elapsed_time seconds"
