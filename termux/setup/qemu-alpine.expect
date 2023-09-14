@@ -25,7 +25,7 @@ expect "localhost login:"
 send "root\r"
 
 expect "localhost:~#"
-send "export MIRRORS='http://dl-cdn.alpinelinux.org/alpine/ http://uk.alpinelinux.org/alpine/ http://dl-2.alpinelinux.org/alpine/'"
+send "export MIRRORS='http://dl-cdn.alpinelinux.org/alpine/ http://uk.alpinelinux.org/alpine/ http://dl-2.alpinelinux.org/alpine/'\r"
 
 # Create answerfile
 expect "localhost:~#"
