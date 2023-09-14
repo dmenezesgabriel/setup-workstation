@@ -27,6 +27,8 @@ apt install -yq qemu-system-x86-64-headless \
                expect \
                root-repo
 
+apt install -yq docker
+
 
 echo "\n=========== Download Alpine ===========\n"
 
@@ -55,7 +57,7 @@ cp -r $SSH_PATH/qemukey.pub $ALPINE_PATH/qemukey.pub
 
 echo "\n=========== Run expect file ===========\n"
 
-expect -f qemu.expect
+expect -f qemu-alpine.expect
 
 echo "\n=========== Create alpine.sh ===========\n"
 
