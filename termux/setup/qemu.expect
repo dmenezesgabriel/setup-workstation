@@ -2,6 +2,7 @@
 set timeout -1
 
 set answerfile [exec cat $env(ALPINE_PATH)/alpine-setup.conf]
+set qemukey [exec cat $env(ALPINE_PATH)/qemukey.pub]
 
 #
 # install the system
@@ -10,12 +11,11 @@ set answerfile [exec cat $env(ALPINE_PATH)/alpine-setup.conf]
 spawn qemu-img create -f qcow2 $env(ALPINE_PATH)/alpine.qcow2 $env(DISK_SIZE)
 expect "Formatting '$env(ALPINE_PATH)/alpine.qcow2', fmt=qcow2 size=$env(DISK_SIZE)"
 
-spawn qemu-system-x86_64 -m 1024 \
-                         -smp cpus=2 \
+spawn qemu-system-x86_64 -m 2040 \
+                         -cpu max \
                          -netdev user,id=n1,hostfwd=tcp::2222-:22 \
                          -device virtio-net,netdev=n1 \
                          -cdrom $env(ALPINE_PATH)/$env(ALPINE_ISO_FILE) \
-                         -boot d \
                          -nographic $env(ALPINE_PATH)/alpine.qcow2
 
 
@@ -38,15 +38,76 @@ send "$env(ROOT_PASSWORD)\n"
 expect "Retype password: "
 send "$env(ROOT_PASSWORD)\n"
 
+# Setup user
+expect "\[y\]"
+send "no\r"
+
+# Erase disk
 expect "\[n\]"
 send "y\r"
-
 
 expect "Please reboot"
 send "halt\r"
 
-sleep 5
+sleep 3
 
 close -i $qemuID
 
-sleep 3
+sleep 5
+
+#
+# setup the system
+#
+
+spawn qemu-system-x86_64 -m 2040 \
+                         -cpu max \
+                         -netdev user,id=n1,hostfwd=tcp::2222-:22 \
+                         -device virtio-net,netdev=n1 \
+                         -nographic $env(ALPINE_PATH)/alpine.qcow2
+
+
+set qemuID $spawn_id
+
+expect "alpine login:"
+send "root\r"
+
+expect "Password:"
+send "$env(ROOT_PASSWORD)\n"
+
+expect "#"
+send "apk update && apk add docker ip6tables\r"
+
+expect "#"
+send "service docker start\r"
+
+expect "#"
+send "rc-update add docker\r"
+
+expect "#"
+send "apk add zram-init\r"
+
+# fix broken zram init script
+expect "#"
+send "sed -i -E 's/num_devices=2/num_devices=1/' /etc/conf.d/zram-init\r"
+
+expect "#"
+send "service zram-init start\r"
+
+expect "#"
+send "rc-update add zram-init\r"
+
+expect "#"
+send "mkdir -p /root/.ssh\r"
+
+expect "#"
+send "chmod 700 /root/.ssh\r"
+
+expect "#"
+send "echo $qemukey >> /root/.ssh/authorized_keys\r"
+
+expect "#"
+send "poweroff\r"
+
+sleep 5
+
+close -i $qemuID

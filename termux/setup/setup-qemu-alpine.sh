@@ -7,10 +7,10 @@ export ALPINE_PATH=~/alpine
 export SSH_PATH=~/.ssh
 export DISK_SIZE=10G
 export ROOT_PASSWORD=secret123
-export ALPINE_ISO_FILE=alpine-virt-3.14.0-x86_64.iso
-export ALPINE_ISO_URL=https://dl-cdn.alpinelinux.org/alpine/v3.14/releases/x86_64/$ALPINE_ISO_FILE
+export ALPINE_ISO_FILE=alpine-virt-3.18.0-x86_64.iso
+export ALPINE_ISO_URL=https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/$ALPINE_ISO_FILE
 
-echo "=========== Environment ===========\n"
+echo "\n=========== Environment ===========\n"
 
 echo "Disk Size: $DISK_SIZE"
 echo "Download url: $ALPINE_ISO_URL"
@@ -27,7 +27,7 @@ apt install -yq qemu-system-x86-64-headless \
                expect
 
 
-echo "=========== Download Alpine ===========\n"
+echo "\n=========== Download Alpine ===========\n"
 
 rm -r $ALPINE_PATH
 
@@ -41,17 +41,24 @@ wget -P $ALPINE_PATH $ALPINE_ISO_URL
 
 echo "Downloaded File: $(ls $ALPINE_PATH | grep $ALPINE_ISO_FILE)"
 
-rm -r $SSH_PATH
+
+echo "\n=========== Create qemu ssh keys ===========\n"
 
 mkdir -p $SSH_PATH
 
-echo "=========== Run expect file ===========\n"
+rm $SSH_PATH/qemukey $SSH_PATH/qemukey.pub
+
+ssh-keygen -b 2048 -t rsa -N "" -f $SSH_PATH/qemukey
+
+cp -r $SSH_PATH/qemukey.pub $ALPINE_PATH/qemukey.pub
+
+echo "\n=========== Run expect file ===========\n"
 
 expect -f qemu.expect
 
-echo "=========== Create alpine.sh ===========\n"
+echo "\n=========== Create alpine.sh ===========\n"
 
-echo "qemu-system-x86_64 -m 1024 -netdev user,id=n1,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic $ALPINE_PATH/alpine.qcow2" >> $ALPINE_PATH/alpine.sh
+echo "qemu-system-x86_64 -m 2040 -cpu max -netdev user,id=n1,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic $ALPINE_PATH/alpine.qcow2" >> $ALPINE_PATH/alpine.sh
 
 end_time=$(date +%s)
 
