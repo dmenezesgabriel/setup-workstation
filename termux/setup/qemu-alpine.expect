@@ -8,6 +8,9 @@ set resolv_conf {
     nameserver 8.8.4.4
     # You can add additional DNS server entries as needed
 }
+set udhcpc {
+  RESOLV_CONF="no"
+}
 
 #
 # install the system
@@ -29,6 +32,9 @@ set qemuID $spawn_id
 
 expect "localhost login:"
 send "root\r"
+
+expect "localhost:~#"
+send "echo '$udhcpc' > /etc/udhcpc/udhcpc.conf\r"
 
 expect "localhost:~#"
 send "echo '$resolv_conf' > /tmp/resolv.conf\r"
