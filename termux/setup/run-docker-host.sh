@@ -9,3 +9,4 @@ ssh -p 2222 -i ~/.ssh/qemukey root@localhost service docker stop
 sleep 3
 
 ssh -p 2222 -i ~/.ssh/qemukey root@localhost dockerd -H tcp://0.0.0.0:2375 --iptables=false
+``

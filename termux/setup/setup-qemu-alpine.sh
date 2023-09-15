@@ -7,8 +7,8 @@ export ALPINE_PATH=~/alpine
 export SSH_PATH=~/.ssh
 export DISK_SIZE=10G
 export ROOT_PASSWORD=secret123
-export ALPINE_ISO_FILE=alpine-virt-3.18.0-x86_64.iso
-export ALPINE_ISO_URL=https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/$ALPINE_ISO_FILE
+export ALPINE_ISO_FILE=alpine-virt-3.14.0-x86_64.iso
+export ALPINE_ISO_URL=https://dl-cdn.alpinelinux.org/alpine/v3.14/releases/x86_64/$ALPINE_ISO_FILE
 
 echo "\n=========== Environment ===========\n"
 
@@ -63,12 +63,13 @@ echo "\n=========== Create alpine.sh ===========\n"
 
 echo "qemu-system-x86_64 -m 2040 -cpu max -netdev user,id=n1,hostfwd=tcp::2222-:22,hostfwd=tcp::2375-:2375 -device virtio-net,netdev=n1 -nographic $ALPINE_PATH/alpine.qcow2" >> $ALPINE_PATH/alpine.sh
 
-end_time=$(date +%s)
-
-elapsed_time=$((end_time - start_time))
-
 echo "\n=========== export Docker Host ===========\n"
 
 echo "export DOCKER_HOST=tcp://localhost:2375" >> ~/.bashrc ; bash
 
+end_time=$(date +%s)
+
+elapsed_time=$((end_time - start_time))
+
 echo "Elapsed time: $elapsed_time seconds"
+
