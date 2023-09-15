@@ -2,7 +2,9 @@
 
 start_time=$(date +%s)
 
-ZSH_CUSTOM=~/.oh-my-zsh/custom
+ZSH_PATH=~/.oh-my-zsh
+ZSH_CUSTOM=$ZSH_PATH/custom
+ZSH_RC_FILE=~/.zshrc
 
 # Update package repositories
 pkg update -y && pkg upgrade -y
@@ -13,14 +15,14 @@ pkg install -y git \
                curl
 
 # Clone Oh My Zsh repository
-rm -rf ~/.oh-my-zsh
-git clone https://github.com/ohmyzsh/ohmyzsh.git
+rm -rf $ZSH_PATH
+git clone https://github.com/ohmyzsh/ohmyzsh.git $ZSH_PATH
 
 # Create a backup of the default Zsh configuration file
-mv ~/.zshrc ~/.zshrc.bak
+mv $ZSH_RC_FILE $ZSH_RC_FILE.bak
 
 # Create a custom Zsh configuration file
-cat <<EOF > ~/.zshrc
+cat <<EOF > $ZSH_RC_FILE
 export ZSH="/data/data/com.termux/files/home/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting)

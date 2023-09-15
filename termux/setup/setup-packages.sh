@@ -7,7 +7,8 @@ echo "=========== Install packages ===========\n"
 apt update -q
 apt install -y root-repo \
                x11-repo \
-               wget \
+
+apt install -y wget \
                git
 
 end_time=$(date +%s)
