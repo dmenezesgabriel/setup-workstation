@@ -3,6 +3,11 @@ set timeout -1
 
 set answerfile [exec cat $env(ALPINE_PATH)/alpine-setup.conf]
 set qemukey [exec cat $env(ALPINE_PATH)/qemukey.pub]
+set resolv_conf {
+    nameserver 8.8.8.8
+    nameserver 8.8.4.4
+    # You can add additional DNS server entries as needed
+}
 
 #
 # install the system
@@ -24,6 +29,12 @@ set qemuID $spawn_id
 
 expect "localhost login:"
 send "root\r"
+
+expect "localhost:~#"
+send "echo '$resolv_conf' > /tmp/resolv.conf\r"
+
+expect "localhost:~#"
+send "apk update\r"
 
 # Create answerfile
 expect "localhost:~#"
