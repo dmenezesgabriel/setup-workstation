@@ -16,6 +16,7 @@ spawn qemu-system-x86_64 -m 2040 \
                          -netdev user,id=n1,hostfwd=tcp::2222-:22 \
                          -device virtio-net,netdev=n1 \
                          -cdrom $env(ALPINE_PATH)/$env(ALPINE_ISO_FILE) \
+                         -boot d\
                          -nographic $env(ALPINE_PATH)/alpine.qcow2
 
 
