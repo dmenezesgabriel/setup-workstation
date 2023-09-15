@@ -1,23 +1,19 @@
 #!/bin/bash
 
-ZSH_CUSTOM=~/.oh-my-zsh/custom
+start_time=$(date +%s)
 
-termux-change-repo
+ZSH_CUSTOM=~/.oh-my-zsh/custom
 
 # Update package repositories
 pkg update -y && pkg upgrade -y
 
-pkg remove -y git
-pkg remove -y libcurl
-pkg install -y git
-pkg install -y libcurl
-
-# Install Zsh and other required packages
-pkg install -y zsh \
+pkg install -y git \
+               libcurl
+               zsh \
                curl
 
 # Clone Oh My Zsh repository
-rm -r ~/.oh-my-zsh
+rm -rf ~/.oh-my-zsh
 git clone https://github.com/ohmyzsh/ohmyzsh.git
 
 # Create a backup of the default Zsh configuration file
@@ -30,7 +26,6 @@ ZSH_THEME="robbyrussell"
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 
 alias ll='ls -l'
-
 EOF
 
 # Install additional plugins if needed
@@ -38,5 +33,8 @@ EOF
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting
 git clone https://github.com/zsh-users/zsh-autosuggestions.git $ZSH_CUSTOM/plugins/zsh-autosuggestions
 
-# Start Zsh
-zsh
+end_time=$(date +%s)
+
+elapsed_time=$((end_time - start_time))
+
+echo "Elapsed time: $elapsed_time seconds"

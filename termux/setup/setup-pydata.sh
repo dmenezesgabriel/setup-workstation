@@ -1,6 +1,8 @@
 #!/bin/bash
 
-PYDATA_PATH=~/pydata
+start_time=$(date +%s)
+
+PYDATA_PATH=~/Documents/repos/py-data
 
 echo "=========== Environment ===========\n"
 
@@ -87,3 +89,9 @@ venv/bin/python -m pip install validators==0.22.0
 venv/bin/python -m pip install watchdog==3.0.0
 
 venv/bin/python -m pip install --no-cache-dir --no-dependencies streamlit
+
+end_time=$(date +%s)
+
+elapsed_time=$((end_time - start_time))
+
+echo "Elapsed time: $elapsed_time seconds"
