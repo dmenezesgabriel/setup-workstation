@@ -2,11 +2,16 @@
 
 start_time=$(date +%s)
 
-PYDATA_PATH=~/Documents/repos/py-data
+VENV_PARENT_DIR=$1
+
+if [ $# -eq 0 ]; then
+  echo "No arguments provided. Script will exit with an error."
+  exit 1
+fi
 
 echo "=========== Environment ===========\n"
 
-echo "Streamlit app path: $PYDATA_PATH"
+echo "Streamlit app path: $VENV_PARENT_DIR"
 
 echo "=========== Install dependencies ===========\n"
 
@@ -37,12 +42,12 @@ echo "\nPython global libs: \n$(python -m pip freeze)"
 
 echo "=========== Create pydata directory ===========\n"
 
-rm -r $PYDATA_PATH
-mkdir -p $PYDATA_PATH
+rm -r $VENV_PARENT_DIR
+mkdir -p $VENV_PARENT_DIR
 
-cp requirements.txt $PYDATA_PATH
+cp requirements.txt $VENV_PARENT_DIR
 
-cd $PYDATA_PATH
+cd $VENV_PARENT_DIR
 
 echo "=========== Create virtual environment ===========\n"
 

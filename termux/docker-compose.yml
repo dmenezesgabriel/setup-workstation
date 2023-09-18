@@ -2,17 +2,11 @@ services:
   termux:
     image: termux/termux-docker:latest
     ports:
-      - 8022:8022
-      - 8888:8888
-      - 8501:8501
+      # ===================================================================== #
+      - "4510-4559:4510-4559"
     volumes:
-      # - ./app_data/home:/data/data/com.termux/files/home
       - ./setup:/data/data/com.termux/files/home/setup
-    environment:
-      - TERMUX_UID=1000
-      - TERMUX_GID=1000
     working_dir: /data/data/com.termux/files/home/setup
     stdin_open: true # Enable reading from the standard input
     tty: true # Allocate a pseudo-TTY
     command: TERM=xterm-256color /bin/bash
-    # -c "sh setup-qemu.sh"
