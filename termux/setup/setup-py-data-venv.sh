@@ -15,6 +15,8 @@ echo "Streamlit app path: $VENV_PARENT_DIR"
 
 echo "=========== Install dependencies ===========\n"
 
+mkdir -p $VENV_PARENT_DIR
+
 apt update
 apt install -y tur-repo
 

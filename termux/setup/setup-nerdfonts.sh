@@ -21,7 +21,9 @@ echo "Unzip FiraCode"
 
 unzip FiraCode.zip
 
-cp FiraCode<font>.ttf ~/termux/font.ttf
+mv FiraCodeNerdFont-Regular.ttf ~/.termux/font.ttf
+
+termux-reload-settings
 
 end_time=$(date +%s)
 
