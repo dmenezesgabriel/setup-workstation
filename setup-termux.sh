@@ -62,6 +62,8 @@ sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
 echo "exec zsh" > ~/.bashrc
 
 # Install Nix
+echo "build-users-group =" > /etc/nix/nix.conf
+
 curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 
 # Source Nix
