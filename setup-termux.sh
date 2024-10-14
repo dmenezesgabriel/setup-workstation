@@ -54,15 +54,33 @@ proot-distro install ubuntu
 
 proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
-apt install -y zsh
+apt install -y zsh curl
 
 sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
 echo "exec zsh" > ~/.bashrc
 
+# Install Nix
 curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 
+# Source Nix
+. ~/.nix-profile/etc/profile.d/nix.sh
+
+# Add Nix to shell configuration
+echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.zshrc
+echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
+
+# Install some basic Nix packages to verify installation
+nix-env -iA nixpkgs.hello nixpkgs.cowsay
+
+# Verify Nix installation
+echo "Verifying Nix installation:"
+nix-env --version
+hello
+cowsay "Nix is installed and working!"
+
+echo "Nix has been installed and configured successfully."
 EOF
 
 create_separator "Finish"
