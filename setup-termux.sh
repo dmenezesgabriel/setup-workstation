@@ -70,7 +70,7 @@ proot-distro login ubuntu --shared-tmp -- groupadd storage
 proot-distro login ubuntu --shared-tmp -- groupadd wheel
 proot-distro login ubuntu --shared-tmp -- useradd -m -g users -G wheel,audio,video,storage -s /bin/bash "$username"
 echo "$username:$password" | proot-distro login ubuntu --shared-tmp -- chpasswd
-proot-distro login ubuntu --shared-tmp -- /bin/bash -c "echo '$username ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers"
+echo "$username ALL=(ALL) ALL" | tee -a $HOME/../usr/var/lib/proot-distro/installed-rootfs/ubuntu/etc/sudoers > /dev/null
 
 proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
