@@ -64,29 +64,24 @@ usermod -aG sudo $username
 
 su - "$username"
 
-sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
-echo "exec zsh" > ~/.bashrc
+# sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+# git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+# sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
+# echo "exec zsh" > ~/.bashrc
 
-# Install Nix
-curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
+# curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 
-# Source Nix
-. ~/.nix-profile/etc/profile.d/nix.sh
+# . ~/.nix-profile/etc/profile.d/nix.sh
 
-# Add Nix to shell configuration
-echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.zshrc
-echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
+# echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.zshrc
+# echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
 
-# Install some basic Nix packages to verify installation
-nix-env -iA nixpkgs.hello nixpkgs.cowsay
+# nix-env -iA nixpkgs.hello nixpkgs.cowsay
 
-# Verify Nix installation
-echo "Verifying Nix installation:"
-nix-env --version
-hello
-cowsay "Nix is installed and working!"
+# echo "Verifying Nix installation:"
+# nix-env --version
+# hello
+# cowsay "Nix is installed and working!"
 
 EOF
 
