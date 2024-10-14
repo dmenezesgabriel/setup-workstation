@@ -24,8 +24,6 @@ echo "Password entered: [hidden]"
 
 create_separator "Install dependencies"
 
-termux-change-repo
-
 pkg update && pkg upgrade -y
 
 yes | pkg install x11-repo
