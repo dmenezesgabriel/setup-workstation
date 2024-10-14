@@ -31,8 +31,7 @@ echo -e "${GREEN}======= Create virtual environment =======${NC}\n"
 
 rm -rf ~/environments/general && \
 python -m venv --system-site-packages ~/environments/general && \
-echo "source ~/environments/general/bin/activate" >> ~/.bashrc && \
-source ~/environments/general/bin/activate
+echo "source ~/environments/general/bin/activate" >> ~/.bashrc
 
 echo -e "${GREEN}===== Remove existing Ubuntu distro =====${NC}\n"
 
