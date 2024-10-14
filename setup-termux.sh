@@ -54,16 +54,22 @@ proot-distro install ubuntu
 
 proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
-apt install -y zsh curl
+apt install -y zsh curl sudo
 
+# Create a new user
+useradd -m -s /bin/zsh user
+echo "user:password" | chpasswd
+usermod -aG sudo user
+
+# Switch to the new user
+su - user << EOL
+
+# Install Oh My Zsh
 sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
-echo "exec zsh" > ~/.bashrc
 
 # Install Nix
-echo "build-users-group =" > /etc/nix/nix.conf
-
 curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 
 # Source Nix
@@ -82,7 +88,22 @@ nix-env --version
 hello
 cowsay "Nix is installed and working!"
 
-echo "Nix has been installed and configured successfully."
+echo "Nix has been installed and configured successfully for user 'user'."
+EOL
+
+# Set up auto-login for the new user
+echo "#!/bin/bash
+if [ \$(id -u) -eq 0 ]; then
+    exec su - user
+else
+    exec zsh
+fi" > /usr/local/bin/login-as-user
+chmod +x /usr/local/bin/login-as-user
+
+# Modify proot-distro login command
+sed -i 's|command="bash"|command="/usr/local/bin/login-as-user"|' /data/data/com.termux/files/usr/etc/proot-distro/ubuntu.sh
+
+echo "Setup complete. You can now login to Ubuntu and use Nix as the 'user' account."
 EOF
 
 create_separator "Finish"
