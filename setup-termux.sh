@@ -69,6 +69,7 @@ yes | proot-distro login ubuntu --shared-tmp -- apt upgrade
 proot-distro login ubuntu --shared-tmp -- groupadd storage
 proot-distro login ubuntu --shared-tmp -- groupadd wheel
 proot-distro login ubuntu --shared-tmp -- useradd -m -g users -G wheel,audio,video,storage -s /bin/bash "$username"
+echo "$username:$password" | proot-distro login ubuntu --shared-tmp -- chpasswd
 
 proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
