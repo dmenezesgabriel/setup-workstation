@@ -52,7 +52,6 @@ create_separator "Install and setup proot distro"
 
 proot-distro install ubuntu
 
-# Login to Ubuntu and set up user, Zsh, and Oh My Zsh
 proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
 apt install -y zsh
@@ -61,6 +60,8 @@ sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/to
 git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
 echo "exec zsh" > ~/.bashrc
+
+curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 
 EOF
 
