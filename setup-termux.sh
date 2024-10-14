@@ -74,7 +74,7 @@ proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
 apt install -y zsh curl sudo
 
-usermod -aG $username
+su - $username
 
 sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
