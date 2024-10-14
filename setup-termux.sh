@@ -53,15 +53,15 @@ create_separator "Install and setup proot distro"
 proot-distro install ubuntu
 
 proot-distro login ubuntu -- /bin/bash << EOF
-apt update && apt upgrade -y
-apt install -y zsh curl
+# apt update && apt upgrade -y
+# apt install -y zsh curl
 
 username=dev
 password=dev
 
 mkdir -p /home/\$username
 
-useradd -D -m $username
+useradd -m $username LOGIN
 usermod -aG $username
 
 su - "$username"
