@@ -18,7 +18,6 @@ start_time=$(date +%s)
 
 read -r -p "Select a username: " username </dev/tty
 read -r -s -p "Enter password for $username: " password </dev/tty
-echo # move to a new line
 
 create_separator "Install dependencies"
 
