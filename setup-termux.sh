@@ -4,9 +4,19 @@
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+# Function to create centered separator
+create_separator() {
+    local text="$1"
+    local total_length=40
+    local text_length=${#text}
+    local padding=$(( (total_length - text_length) / 2 ))
+    local separator=$(printf '%*s' "$padding" | tr ' ' '=')
+    echo -e "${GREEN}${separator} ${text} ${separator}${NC}\n"
+}
+
 start_time=$(date +%s)
 
-echo -e "${GREEN}================= Install dependencies =================${NC}\n"
+create_separator "Install dependencies"
 
 pkg update && pkg upgrade -y
 pkg install -y \
@@ -27,18 +37,18 @@ pkg install -y \
     python-pip \
     nodejs-lts
 
-echo -e "${GREEN}=============== Create virtual environment ==============${NC}\n"
+create_separator "Create virtual environment"
 
 rm -rf ~/environments/general && \
 python -m venv --system-site-packages ~/environments/general && \
 echo "source ~/environments/general/bin/activate" >> ~/.bashrc && \
 source ~/environments/general/bin/activate
 
-echo -e "${GREEN}=========== Remove existing Ubuntu distro ==============${NC}\n"
+create_separator "Remove existing Ubuntu distro"
 
 proot-distro remove ubuntu
 
-echo -e "${GREEN}=========== Install and setup proot distro ==============${NC}\n"
+create_separator "Install and setup proot distro"
 
 proot-distro install ubuntu
 
@@ -54,7 +64,7 @@ echo "exec zsh" > ~/.bashrc
 
 EOF
 
-echo -e "${GREEN}======================= Finish ========================${NC}\n"
+create_separator "Finish"
 
 end_time=$(date +%s)
 
