@@ -45,25 +45,43 @@ proot-distro install ubuntu
 # Login to Ubuntu and set up user, Zsh, and Oh My Zsh
 proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
-apt install -y zsh
+apt install -y zsh sudo curl wget git
 
 useradd -m -s /bin/zsh user
 echo "user:password" | chpasswd
 usermod -aG sudo user
 
 su - user << EOL
+export SHELL=/bin/zsh
+export TERM=xterm-256color
+
+# Install Oh My Zsh
 sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+# Install zsh-autosuggestions
 git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
+
+# Configure Zsh
+cat << 'ZSHRC' > ~/.zshrc
+export ZSH="\$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git zsh-autosuggestions)
+source \$ZSH/oh-my-zsh.sh
+export SHELL=/bin/zsh
+export TERM=xterm-256color
+ZSHRC
+
+# Source the new .zshrc
+source ~/.zshrc
 EOL
 
 # Create a custom login script
 cat << 'EOT' > /usr/local/bin/login-as-user
-#!/bin/bash
+#!/bin/zsh
 if [ "\$(id -u)" -eq 0 ]; then
     exec su - user
 else
-    exec zsh
+    exec /bin/zsh -l
 fi
 EOT
 
