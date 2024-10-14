@@ -40,6 +40,13 @@ proot-distro remove ubuntu
 
 echo -e "${GREEN}===== Install and setup proot distro =====${NC}\n"
 
+# Set environment variables to potentially fix proot warnings
+export PROOT_NO_SECCOMP=1
+export LD_PRELOAD=$LD_PRELOAD:/lib/aarch64-linux-gnu/libgcc_s.so.1
+
+# Modify proot-distro configuration
+sed -i 's/^PROOT_OPTIONS=.*/PROOT_OPTIONS="-L -p"/' $PREFIX/etc/proot-distro/proot-distro.cfg
+
 proot-distro install ubuntu
 
 # Login to Ubuntu and set up user, Zsh, and Oh My Zsh
@@ -47,10 +54,13 @@ proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
 apt install -y zsh sudo curl wget git
 
+# Create user and set up sudo
 useradd -m -s /bin/zsh user
 echo "user:password" | chpasswd
 usermod -aG sudo user
+echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
+# Switch to the new user and set up Zsh
 su - user << EOL
 export SHELL=/bin/zsh
 export TERM=xterm-256color
@@ -69,6 +79,7 @@ plugins=(git zsh-autosuggestions)
 source \$ZSH/oh-my-zsh.sh
 export SHELL=/bin/zsh
 export TERM=xterm-256color
+export PROOT_NO_SECCOMP=1
 ZSHRC
 
 # Source the new .zshrc
@@ -77,7 +88,7 @@ EOL
 
 # Create a custom login script
 cat << 'EOT' > /usr/local/bin/login-as-user
-#!/bin/zsh
+#!/bin/bash
 if [ "\$(id -u)" -eq 0 ]; then
     exec su - user
 else
@@ -88,10 +99,9 @@ EOT
 chmod +x /usr/local/bin/login-as-user
 
 # Modify proot-distro login command
-sed -i 's|command="bash"|command="login-as-user"|' /data/data/com.termux/files/usr/etc/proot-distro/ubuntu.sh
+sed -i 's|command="bash"|command="/usr/local/bin/login-as-user"|' /data/data/com.termux/files/usr/etc/proot-distro/ubuntu.sh
 
 echo "User 'user' created successfully in Ubuntu environment with Zsh and Oh My Zsh."
-echo "Note: The user 'user' has been added to the sudo group and will need to enter their password when using sudo."
 echo "The system is now set up to automatically log in as 'user' when using 'proot-distro login ubuntu'."
 EOF
 
