@@ -34,6 +34,10 @@ python -m venv --system-site-packages ~/environments/general && \
 echo "source ~/environments/general/bin/activate" >> ~/.bashrc && \
 source ~/environments/general/bin/activate
 
+echo -e "${GREEN}=========== Remove existing Ubuntu distro ==============${NC}\n"
+
+proot-distro remove ubuntu
+
 echo -e "${GREEN}=========== Install and setup proot distro ==============${NC}\n"
 
 proot-distro install ubuntu
