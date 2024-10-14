@@ -59,9 +59,14 @@ apt install -y zsh curl
 username=dev
 password=dev
 
-adduser --gecos "" --disabled-password $username
-chpasswd <<<"$username:$password"
+# Create user and set password
+useradd -m -s /bin/bash $username
+echo "$username:$password" | chpasswd
 
+# Add user to sudo group
+usermod -aG sudo $username
+
+# Switch to the new user and set up their environment
 su - "$username" << EOL
 $password
 
