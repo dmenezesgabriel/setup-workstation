@@ -6,4 +6,6 @@ Useful installation scripts for linux
 
 ## Termux
 
+```sh
 curl https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/setup-termux.sh | sh
+```
