@@ -40,12 +40,8 @@ proot-distro remove ubuntu
 
 echo -e "${GREEN}===== Install and setup proot distro =====${NC}\n"
 
-# Set environment variables to potentially fix proot warnings
+# Set environment variable to potentially fix proot warnings
 export PROOT_NO_SECCOMP=1
-export LD_PRELOAD=$LD_PRELOAD:/lib/aarch64-linux-gnu/libgcc_s.so.1
-
-# Modify proot-distro configuration
-sed -i 's/^PROOT_OPTIONS=.*/PROOT_OPTIONS="-L -p"/' $PREFIX/etc/proot-distro/proot-distro.cfg
 
 proot-distro install ubuntu
 
