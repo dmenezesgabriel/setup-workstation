@@ -10,28 +10,14 @@ echo -e "${GREEN}========== Install dependencies ==========${NC}\n"
 
 pkg update && pkg upgrade -y
 pkg install -y \
-    x11-repo \
     proot \
     proot-distro \
-    tur-repo \
     pulseaudio \
-    openssh \
     git \
     curl \
     wget \
     zsh \
-    tmux \
-    vim \
-    build-essential \
-    python \
-    python-pip \
-    nodejs-lts
-
-echo -e "${GREEN}======= Create virtual environment =======${NC}\n"
-
-rm -rf ~/environments/general && \
-python -m venv --system-site-packages ~/environments/general && \
-echo "source ~/environments/general/bin/activate" >> ~/.bashrc
+    python
 
 echo -e "${GREEN}===== Remove existing Ubuntu distro =====${NC}\n"
 
@@ -42,10 +28,23 @@ echo -e "${GREEN}===== Install and setup proot distro =====${NC}\n"
 # Set environment variable to potentially fix proot warnings
 export PROOT_NO_SECCOMP=1
 
-proot-distro install ubuntu
+# Attempt to install Ubuntu, with error handling
+if ! proot-distro install ubuntu; then
+    echo "Failed to install Ubuntu. Trying alternative method..."
+    proot-distro install ubuntu --override-alias ubuntu-lts
+fi
+
+# Check if Ubuntu was successfully installed
+if ! proot-distro list | grep -q "ubuntu"; then
+    echo "Failed to install Ubuntu. Exiting."
+    exit 1
+fi
 
 # Login to Ubuntu and set up user, Zsh, and Oh My Zsh
 proot-distro login ubuntu -- /bin/bash << EOF
+set -e  # Exit on any error
+
+# Basic system setup
 apt update && apt upgrade -y
 apt install -y zsh sudo curl wget git
 
