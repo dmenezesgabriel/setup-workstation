@@ -59,16 +59,11 @@ apt install -y zsh curl
 username=dev
 password=dev
 
-# Create user and set password
 useradd -m -s /bin/bash $username
-echo "$username:$password" | chpasswd
 
-# Add user to sudo group
 usermod -aG sudo $username
 
-# Switch to the new user and set up their environment
-su - "$username" << EOL
-$password
+su - "$username"
 
 sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
@@ -93,7 +88,6 @@ echo "Verifying Nix installation:"
 nix-env --version
 hello
 cowsay "Nix is installed and working!"
-EOL
 
 EOF
 
