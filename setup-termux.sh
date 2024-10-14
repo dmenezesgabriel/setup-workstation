@@ -16,15 +16,28 @@ create_separator() {
 
 start_time=$(date +%s)
 
+read -r -p "Select a username: " username </dev/tty
+read -r -s -p "Enter password for $username: " password </dev/tty
+echo # move to a new line
+
 create_separator "Install dependencies"
 
+termux-change-repo
+
 pkg update && pkg upgrade -y
+
+yes | pkg install x11-repo
+yes | pkg update
+
 pkg install -y \
-    x11-repo \
+    dbus \
     proot \
     proot-distro \
-    tur-repo \
     pulseaudio \
+    virglrenderer-android \
+    pavucontrol-qt \
+    firefox \
+    tur-repo \
     openssh \
     git \
     curl \
@@ -37,6 +50,8 @@ pkg install -y \
     python-pip \
     nodejs-lts
 
+termux-setup-storage
+
 create_separator "Create virtual environment"
 
 rm -rf ~/environments/general && \
@@ -44,25 +59,28 @@ python -m venv --system-site-packages ~/environments/general && \
 echo "source ~/environments/general/bin/activate" >> ~/.bashrc && \
 source ~/environments/general/bin/activate
 
-create_separator "Remove existing Ubuntu distro"
-
-proot-distro remove ubuntu
-
 create_separator "Install and setup proot distro"
 
-proot-distro install ubuntu
+yes | proot-distro remove ubuntu
+yes | proot-distro install ubuntu
+yes | proot-distro login ubuntu --shared-tmp -- apt update
+yes | proot-distro login ubuntu --shared-tmp -- apt upgrade
+
+proot-distro login ubuntu --shared-tmp -- groupadd storage
+proot-distro login ubuntu --shared-tmp -- groupadd wheel
+proot-distro login ubuntu --shared-tmp -- useradd -m -g users -G wheel,audio,video,storage -s /bin/bash "$username"
+
+echo "$username:$password" | proot-distro login ubuntu --shared-tmp -- chpasswd
+
+chmod u+rw $HOME/../usr/var/lib/proot-distro/installed-rootfs/ubuntu/etc/sudoers
+echo "$username ALL=(ALL) ALL" | tee -a $HOME/../usr/var/lib/proot-distro/installed-rootfs/ubuntu/etc/sudoers > /dev/null
+chmod u-w $HOME/../usr/var/lib/proot-distro/installed-rootfs/ubuntu/etc/sudoers
 
 proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
 apt install -y zsh curl sudo
 
-mkdir -p /home/dev
-chown -R $(whoami):$(whoami) /home/dev
-echo 'export HOME=/home/dev' > /home/dev/.bashrc
-echo 'export USER=dev' >> /home/dev/.bashrc
-export HOME=/home/dev
-export USER=dev
-cd /home/dev
+usermod -aG sudo $username
 
 sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
