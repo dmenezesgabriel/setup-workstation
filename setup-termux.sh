@@ -6,6 +6,11 @@ echo "=========== Install dependencies =================\n"
 
 pkg update && pkg upgrade -y
 pkg install -y \
+    x11-repo \
+    proot \
+    proot-distro \
+    tur-repo \
+    pulseaudio \
     openssh \
     git \
     curl \
@@ -13,7 +18,8 @@ pkg install -y \
     zsh \
     vim \
     python \
-    python-pip
+    python-pip \
+    nodejs-lts
 
 echo "=========== Create virtual environment ===========\n"
 
