@@ -17,7 +17,9 @@ create_separator() {
 start_time=$(date +%s)
 
 read -r -p "Select a username: " username </dev/tty
-read -r -s -p "Enter password for $username: " password </dev/tty
+echo
+read -r -p "Enter password for $username: " password </dev/tty
+echo
 
 create_separator "Install dependencies"
 
