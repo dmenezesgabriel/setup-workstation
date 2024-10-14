@@ -74,7 +74,7 @@ echo "$username ALL=(ALL) ALL" | tee -a $HOME/../usr/var/lib/proot-distro/instal
 
 proot-distro login ubuntu -- /bin/bash << EOF
 apt update && apt upgrade -y
-apt install -y zsh curl sudo
+apt install -y zsh curl
 
 su - $username
 
