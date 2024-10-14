@@ -59,7 +59,7 @@ apt install -y zsh curl
 username=dev
 password=dev
 
-adduser $username
+useradd $username
 
 usermod -aG sudo $username
 
