@@ -60,7 +60,6 @@ username=dev
 password=dev
 
 useradd -m $username
-
 usermod -aG sudo $username
 
 su - "$username"
