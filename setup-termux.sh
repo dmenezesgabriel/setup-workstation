@@ -53,37 +53,35 @@ create_separator "Install and setup proot distro"
 proot-distro install ubuntu
 
 proot-distro login ubuntu -- /bin/bash << EOF
-# apt update && apt upgrade -y
-# apt install -y zsh curl
+apt update && apt upgrade -y
+apt install -y zsh curl sudo
 
-username=dev
-password=dev
+mkdir -p /home/dev
+chown -R $(whoami):$(whoami) /home/dev
+echo 'export HOME=/home/dev' > /home/dev/.bashrc
+echo 'export USER=dev' >> /home/dev/.bashrc
+export HOME=/home/dev
+export USER=dev
+cd /home/dev
 
-mkdir -p /home/\$username
+sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
+echo "exec zsh" > ~/.bashrc
 
-useradd -m $username LOGIN
-usermod -aG $username
+curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 
-su - "$username"
+. ~/.nix-profile/etc/profile.d/nix.sh
 
-# sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-# git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-# sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
-# echo "exec zsh" > ~/.bashrc
+echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.zshrc
+echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
 
-# curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
+nix-env -iA nixpkgs.hello nixpkgs.cowsay
 
-# . ~/.nix-profile/etc/profile.d/nix.sh
-
-# echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.zshrc
-# echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
-
-# nix-env -iA nixpkgs.hello nixpkgs.cowsay
-
-# echo "Verifying Nix installation:"
-# nix-env --version
-# hello
-# cowsay "Nix is installed and working!"
+echo "Verifying Nix installation:"
+nix-env --version
+hello
+cowsay "Nix is installed and working!"
 
 EOF
 
