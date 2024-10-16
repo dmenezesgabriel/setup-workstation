@@ -32,7 +32,7 @@ add_extra_keyboard_keys() {
     extra-keys = [ \
         ['ESC', '!', '&', '%', '(', ')', '{', '}', '[', ']'], \
         ['TAB', '\\\'', '\"', '<', '>', '/', '=', '+', '|'], \
-        ['~', '_', '-', '*', '\`', '\´', 'HOME', 'UP', 'END'], \
+        ['HOME', '~', '_', '-', '*', '\`', '\´', 'UP', 'END'], \
         ['CTRL', ':', ';','ALT', 'DEL', 'BACKSPACE', 'LEFT', 'DOWN', 'RIGHT'] \
     ]
 EOF
@@ -129,10 +129,10 @@ setup_proot_distro() {
     echo "exec zsh" > ~/.bashrc
 
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-    tee -a ~/.zshrc << 'EOL'
+    tee -a ~/.zshrc << 'EOF'
     export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-    EOL
+    EOF
 
     echo "$password" | sudo -S mkdir -p /nix
     echo "$password" | sudo -S chown -R $username /nix
