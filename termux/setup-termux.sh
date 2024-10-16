@@ -4,8 +4,9 @@ TERMUXX_DIR="$HOME/.termux"
 TERMUXX_PROPERTIES="$TERMUXX_DIR/termux.properties"
 EXTRA_KEYS="extra-keys = [ \
     ['ESC', 'TAB', 'CTRL', 'ALT', '(', ')', '{', '}', '[', ']'], \
-    [';', ':', '\'', '\"', '<', '>', '/', '|', '=', '+', '_'], \
-    ['UP', 'DOWN', 'LEFT', 'RIGHT', 'DEL', 'BACKSPACE', '-', '*', '&', '%'] \
+    [';', ':', '\\\'', '\"', '<', '>', '/', '|', '=', '+'], \
+    ['_', '-', '*', '&', '%', '\`', '\´'], \
+    ['UP', 'DOWN', 'LEFT', 'RIGHT', 'DEL', 'BACKSPACE', 'HOME', 'END'] \
 ]"
 NERD_FONTS_PATH=~/NerdFonts
 GREEN='\033[0;32m'
