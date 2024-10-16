@@ -128,8 +128,6 @@ setup_proot_distro() {
     sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
     echo "exec zsh" > ~/.bashrc
 
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | zsh
-
     echo "$password" | sudo -S mkdir -p /nix
     echo "$password" | sudo -S chown -R $username /nix
 
