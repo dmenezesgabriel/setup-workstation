@@ -169,3 +169,5 @@ main() {
 
     echo "Elapsed time: $elapsed_time seconds"
 }
+
+main
