@@ -6,8 +6,16 @@ Useful installation scripts for linux
 
 ## Termux
 
+**setup**:
+
 ```sh
 curl https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/termux/setup-termux.sh | sh
+```
+
+**Nix default**:
+
+```sh
+wget https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/termux/nix/default.nix
 ```
 
 ## Resources
