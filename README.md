@@ -9,7 +9,10 @@ Useful installation scripts for linux
 **setup**:
 
 ```sh
-curl https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/termux/setup-termux.sh | sh
+rm $(PWD)/setup-termux.sh && \
+wget -O $(PWD)/setup-termux.sh https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/termux/setup-termux.sh && \
+chmod +x setup-termux.sh && \
+sh setup-termux.sh
 ```
 
 **Nix default**:

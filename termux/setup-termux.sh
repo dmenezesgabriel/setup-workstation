@@ -2,12 +2,6 @@
 
 TERMUXX_DIR="$HOME/.termux"
 TERMUXX_PROPERTIES="$TERMUXX_DIR/termux.properties"
-EXTRA_KEYS="extra-keys = [ \
-    ['ESC', 'TAB', 'CTRL', 'ALT', '(', ')', '{', '}', '[', ']'], \
-    [';', ':', '\\\'', '\"', '<', '>', '/', '|', '=', '+'], \
-    ['_', '-', '*', '&', '%', '\`', '\´'], \
-    ['UP', 'DOWN', 'LEFT', 'RIGHT', 'DEL', 'BACKSPACE', 'HOME', 'END'] \
-]"
 NERD_FONTS_PATH=~/NerdFonts
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
@@ -21,7 +15,6 @@ create_separator() {
     echo -e "${GREEN}${separator} ${text} ${separator}${NC}\n"
 }
 
-# TODO: not working
 add_extra_keyboard_keys() {
     create_separator "Add extra keyboard keys"
 
@@ -30,7 +23,19 @@ add_extra_keyboard_keys() {
         echo "Created directory: $TERMUXX_DIR"
     fi
 
-    echo "$EXTRA_KEYS" | tee -a "$TERMUXX_PROPERTIES" > /dev/null
+    if [ -f "$TERMUXX_PROPERTIES" ]; then
+        sed -i '/extra-keys\s*=/,/]/d' "$TERMUXX_PROPERTIES"
+        echo "Removed existing extra-keys configuration from $TERMUXX_PROPERTIES"
+    fi
+
+    cat <<EOF | tee -a "$TERMUXX_PROPERTIES" > /dev/null
+    extra-keys = [ \
+        ['ESC', 'TAB', 'CTRL', 'ALT', '(', ')', '{', '}', '[', ']'], \
+        [';', ':', '\\\'', '\"', '<', '>', '/', '|', '=', '+'], \
+        ['_', '-', '*', '&', '%', '\`', '\´'], \
+        ['UP', 'DOWN', 'LEFT', 'RIGHT', 'DEL', 'BACKSPACE', 'HOME', 'END'] \
+    ]
+EOF
 }
 
 add_nerd_fonts() {
@@ -113,7 +118,7 @@ setup_proot_distro() {
 
     proot-distro login ubuntu -- /bin/bash << EOF
     apt update && apt upgrade -y
-    apt install -y zsh curl sudo
+    apt install -y zsh curl wget sudo
 
     echo "$username ALL=(ALL) ALL" | tee -a /etc/sudoers > /dev/null
     su - $username
@@ -123,8 +128,11 @@ setup_proot_distro() {
     sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
     echo "exec zsh" > ~/.bashrc
 
-    # Install NVM (Node Version Manager) non-interactively
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+    echo '
+    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+    ' >> ~/.zshrc
 
     # Install Node.js via NVM (default version)
     nvm install --lts
@@ -145,7 +153,7 @@ setup_proot_distro() {
     hello
     cowsay "Nix is installed and working!"
 EOF
-    # TODO: not working
+
     proot-distro login ubuntu -- /bin/bash << EOF
     echo "exec su - $username" > ~/.bashrc
 EOF
