@@ -30,10 +30,10 @@ add_extra_keyboard_keys() {
 
     cat <<EOF | tee -a "$TERMUXX_PROPERTIES" > /dev/null
     extra-keys = [ \
-        ['ESC', 'TAB', 'CTRL', 'ALT', '(', ')', '{', '}', '[', ']'], \
-        [';', ':', '\\\'', '\"', '<', '>', '/', '|', '=', '+'], \
-        ['_', '-', '*', '&', '%', '\`', '\´'], \
-        ['UP', 'DOWN', 'LEFT', 'RIGHT', 'DEL', 'BACKSPACE', 'HOME', 'END'] \
+        ['ESC', '!', '&', '%', '(', ')', '{', '}', '[', ']'], \
+        ['TAB', '\\\'', '\"', '<', '>', '/', '=', '+', '|'], \
+        ['~', '_', '-', '*', '\`', '\´', 'HOME', 'UP', 'END'], \
+        ['CTRL', ':', ';','ALT', 'DEL', 'BACKSPACE', 'LEFT', 'DOWN', 'RIGHT'] \
     ]
 EOF
 }
@@ -129,17 +129,13 @@ setup_proot_distro() {
     echo "exec zsh" > ~/.bashrc
 
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-    echo '
+    tee -a ~/.zshrc << 'EOL'
     export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-    ' >> ~/.zshrc
-
-    # Install Node.js via NVM (default version)
-    nvm install --lts
-    nvm use --lts
+    EOL
 
     echo "$password" | sudo -S mkdir -p /nix
-    echo "$password" | sudo -S chown -R $USER /nix
+    echo "$password" | sudo -S chown -R $username /nix
 
     curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
     . ~/.nix-profile/etc/profile.d/nix.sh
