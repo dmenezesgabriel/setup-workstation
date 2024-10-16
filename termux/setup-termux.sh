@@ -109,8 +109,6 @@ setup_proot_distro() {
 
     echo "$username:$password" | proot-distro login ubuntu --shared-tmp -- chpasswd
 
-    echo "$password" | proot-distro login ubuntu --shared-tmp -- sudo -S mkdir -p /nix
-    echo "$password" | sudo -S chown -R $USER /nix
 
     proot-distro login ubuntu -- /bin/bash << EOF
     apt update && apt upgrade -y
@@ -130,6 +128,9 @@ setup_proot_distro() {
     # Install Node.js via NVM (default version)
     nvm install --lts
     nvm use --lts
+
+    echo "$password" | sudo -S mkdir -p /nix
+    echo "$password" | sudo -S chown -R $USER /nix
 
     curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
     . ~/.nix-profile/etc/profile.d/nix.sh
