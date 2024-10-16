@@ -14,6 +14,13 @@ pkgs.mkShell {
     pkgs.tmux
     pkgs.code-server
 
+    # Build tools
+    pkgs.gcc
+    pkgs.gnumake
+
+    # Node.js LTS
+    pkgs.nodejs_22
+
     # Python and pandas dependencies
     pkgs.python3
     pkgs.python3Packages.pip
@@ -25,10 +32,6 @@ pkgs.mkShell {
     pkgs.libffi
     pkgs.hdf5
     pkgs.openblas
-
-    # Build tools
-    pkgs.gcc
-    pkgs.gnumake
   ];
 
   shellHook = ''
