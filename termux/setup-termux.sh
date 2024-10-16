@@ -108,6 +108,8 @@ setup_proot_distro() {
 
     echo "$username:$password" | proot-distro login ubuntu --shared-tmp -- chpasswd
 
+    echo "$password" | proot-distro login ubuntu --shared-tmp -- sudo -S mkdir -p /nix
+
     proot-distro login ubuntu -- /bin/bash << EOF
     apt update && apt upgrade -y
     apt install -y zsh curl sudo
@@ -151,15 +153,14 @@ main() {
     add_extra_keyboard_keys
     add_nerd_fonts
 
-    termux-reload-settings
-
     install_dependencies
-
-    termux-setup-storage
 
     create_python_venv
 
     setup_proot_distro
+
+    termux-reload-settings
+    termux-setup-storage
 
     create_separator "Finish"
 
