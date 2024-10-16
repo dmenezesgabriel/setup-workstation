@@ -7,6 +7,7 @@ EXTRA_KEYS="extra-keys = [ \
     [';', ':', '\'', '\"', '<', '>', '/', '|', '=', '+', '_'], \
     ['UP', 'DOWN', 'LEFT', 'RIGHT', 'DEL', 'BACKSPACE', '-', '*', '&', '%'] \
 ]"
+NERD_FONTS_PATH=~/NerdFonts
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
@@ -28,8 +29,27 @@ add_extra_keyboard_keys() {
     fi
 
     echo "$EXTRA_KEYS" > "$TERMUXX_PROPERTIES"
+}
 
-    termux-reload-settings
+add_nerd_fonts() {
+    create_separator "Create NerdFonts directory"
+
+    rm -rf $NERD_FONTS_PATH
+    mkdir -p $NERD_FONTS_PATH
+
+    echo "Change directory to NerdFonts"
+
+    cd $NERD_FONTS_PATH
+
+    echo "Download FiraCode font"
+
+    wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/FiraCode.zip
+
+    echo "Unzip FiraCode"
+
+    unzip FiraCode.zip
+
+    mv FiraCodeNerdFont-Regular.ttf ~/.termux/font.ttf
 }
 
 install_dependencies() {
@@ -129,6 +149,9 @@ main() {
     echo "Password entered: [hidden]"
 
     add_extra_keyboard_keys
+    add_nerd_fonts
+
+    termux-reload-settings
 
     install_dependencies
 
