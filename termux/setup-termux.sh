@@ -128,12 +128,7 @@ setup_proot_distro() {
     sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
     echo "exec zsh" > ~/.bashrc
 
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-
-    cat <<EOF | tee -a ~/.zshrc > /dev/null
-    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-    EOF
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | zsh
 
     echo "$password" | sudo -S mkdir -p /nix
     echo "$password" | sudo -S chown -R $username /nix
