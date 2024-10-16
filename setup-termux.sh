@@ -1,10 +1,15 @@
 #!/bin/bash
 
-# Define color codes
+TERMUXX_DIR="$HOME/.termux"
+TERMUXX_PROPERTIES="$TERMUXX_DIR/termux.properties"
+EXTRA_KEYS="extra-keys = [ \
+    ['ESC', 'TAB', 'CTRL', 'ALT', '(', ')', '{', '}', '[', ']'], \
+    [';', ':', '\'', '\"', '<', '>', '/', '|', '=', '+', '_'], \
+    ['UP', 'DOWN', 'LEFT', 'RIGHT', 'DEL', 'BACKSPACE', '-', '*', '&', '%'] \
+]"
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-# Function to create centered separator
 create_separator() {
     local text="$1"
     local total_length=40
@@ -14,96 +19,130 @@ create_separator() {
     echo -e "${GREEN}${separator} ${text} ${separator}${NC}\n"
 }
 
-start_time=$(date +%s)
+add_extra_keyboard_keys() {
+    create_separator "Add extra keyboard keys"
 
-read -r -p "Select a username: " username </dev/tty
-echo "Username: $username"
+    if [ ! -d "$TERMUXX_DIR" ]; then
+        mkdir -p "$TERMUXX_DIR"
+        echo "Created directory: $TERMUXX_DIR"
+    fi
 
-read -r -p "Enter password for $username: " password </dev/tty
-echo "Password entered: [hidden]"
+    echo "$EXTRA_KEYS" > "$TERMUXX_PROPERTIES"
 
-create_separator "Install dependencies"
+    termux-reload-settings
+}
 
-pkg update && pkg upgrade -y
+install_dependencies() {
+    create_separator "Install dependencies"
 
-yes | pkg install x11-repo
-yes | pkg update
+    pkg update && pkg upgrade -y
 
-pkg install -y \
-    dbus \
-    proot \
-    proot-distro \
-    pulseaudio \
-    virglrenderer-android \
-    pavucontrol-qt \
-    firefox \
-    tur-repo \
-    openssh \
-    git \
-    curl \
-    wget \
-    zsh \
-    tmux \
-    vim \
-    build-essential \
-    python \
-    python-pip \
-    nodejs-lts
+    yes | pkg install x11-repo
+    yes | pkg update
 
-termux-setup-storage
+    pkg install -y \
+        dbus \
+        proot \
+        proot-distro \
+        pulseaudio \
+        virglrenderer-android \
+        pavucontrol-qt \
+        firefox \
+        tur-repo \
+        openssh \
+        git \
+        curl \
+        wget \
+        zsh \
+        tmux \
+        vim \
+        build-essential \
+        python \
+        python-pip \
+        nodejs-lts
+}
 
-create_separator "Create virtual environment"
+create_python_venv() {
+    create_separator "Create virtual environment"
 
-rm -rf ~/environments/general && \
-python -m venv --system-site-packages ~/environments/general && \
-echo "source ~/environments/general/bin/activate" >> ~/.bashrc && \
-source ~/environments/general/bin/activate
+    rm -rf ~/environments/general && \
 
-create_separator "Install and setup proot distro"
+    python -m venv --system-site-packages ~/environments/general && \
 
-yes | proot-distro remove ubuntu
-yes | proot-distro install ubuntu
-yes | proot-distro login ubuntu --shared-tmp -- apt update
-yes | proot-distro login ubuntu --shared-tmp -- apt upgrade
+    echo "source ~/environments/general/bin/activate" >> ~/.bashrc && \
 
-proot-distro login ubuntu --shared-tmp -- groupadd storage
-proot-distro login ubuntu --shared-tmp -- groupadd wheel
-proot-distro login ubuntu --shared-tmp -- useradd -m -g users -G wheel,audio,video,storage -s /bin/bash "$username"
-echo "$username:$password" | proot-distro login ubuntu --shared-tmp -- chpasswd
+    . ~/environments/general/bin/activate
+}
 
-proot-distro login ubuntu -- /bin/bash << EOF
-apt update && apt upgrade -y
-apt install -y zsh curl sudo
+setup_proot_distro() {
+    create_separator "Install and setup proot distro"
 
-echo "$username ALL=(ALL) ALL" | tee -a /etc/sudoers > /dev/null
+    yes | proot-distro remove ubuntu
+    yes | proot-distro install ubuntu
+    yes | proot-distro login ubuntu --shared-tmp -- apt update
+    yes | proot-distro login ubuntu --shared-tmp -- apt upgrade
 
-su - $username
+    proot-distro login ubuntu --shared-tmp -- groupadd storage
+    proot-distro login ubuntu --shared-tmp -- groupadd wheel
+    proot-distro login ubuntu --shared-tmp -- useradd -m -g users -G wheel,audio,video,storage -s /bin/bash "$username"
 
-sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
-echo "exec zsh" > ~/.bashrc
+    echo "$username:$password" | proot-distro login ubuntu --shared-tmp -- chpasswd
 
-curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
+    proot-distro login ubuntu -- /bin/bash << EOF
+    apt update && apt upgrade -y
+    apt install -y zsh curl sudo
 
-. ~/.nix-profile/etc/profile.d/nix.sh
+    echo "$username ALL=(ALL) ALL" | tee -a /etc/sudoers > /dev/null
+    su - $username
 
-echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.zshrc
-echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
+    sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
+    echo "exec zsh" > ~/.bashrc
 
-nix-env -iA nixpkgs.hello nixpkgs.cowsay
+    curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
+    . ~/.nix-profile/etc/profile.d/nix.sh
+    echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.zshrc
+    echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.bashrc
 
-echo "Verifying Nix installation:"
-nix-env --version
-hello
-cowsay "Nix is installed and working!"
+    nix-env -iA nixpkgs.hello nixpkgs.cowsay
 
+    echo "Verifying Nix installation:"
+    nix-env --version
+    hello
+    cowsay "Nix is installed and working!"
 EOF
 
-create_separator "Finish"
+    proot-distro login ubuntu -- /bin/bash << EOF
+    echo "exec su - $username" > ~/.bashrc
+EOF
 
-end_time=$(date +%s)
+}
 
-elapsed_time=$((end_time - start_time))
+main() {
+    start_time=$(date +%s)
 
-echo "Elapsed time: $elapsed_time seconds"
+    read -r -p "Select a username: " username </dev/tty
+    echo "Username: $username"
+
+    read -r -p "Enter password for $username: " password </dev/tty
+    echo "Password entered: [hidden]"
+
+    add_extra_keyboard_keys
+
+    install_dependencies
+
+    termux-setup-storage
+
+    create_python_venv
+
+    setup_proot_distro
+
+    create_separator "Finish"
+
+    end_time=$(date +%s)
+
+    elapsed_time=$((end_time - start_time))
+
+    echo "Elapsed time: $elapsed_time seconds"
+}
