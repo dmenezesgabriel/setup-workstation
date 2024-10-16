@@ -8,8 +8,6 @@ pkgs.mkShell {
     pkgs.vim          # Vim text editor
     pkgs.htop         # Htop for monitoring system processes
     pkgs.code-server  # Code-server for remote VS Code
-    pkgs.nodejs       # Node.js (for nvm)
-    pkgs.python       # Python (for pyenv)
     pkgs.nix          # Nix package manager
   ];
 
