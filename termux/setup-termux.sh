@@ -129,7 +129,8 @@ setup_proot_distro() {
     echo "exec zsh" > ~/.bashrc
 
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-    tee -a ~/.zshrc << 'EOF'
+
+    cat <<EOF | tee -a ~/.zshrc > /dev/null
     export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
     EOF
