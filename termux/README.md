@@ -1,33 +1,15 @@
 # Termux
 
-- **Run docker termux image**:
+## SSH
+
+1. Install dependencies:
 
 ```sh
-docker-compose run --rm termux
+pkg install openssh
 ```
 
-- **Install NerdFonts**:
-
-```sh
-curl -o setup-nerdfonts.sh https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/termux/setup/setup-nerdfonts.sh && chmod 755 ./setup-nerdfonts.sh && sh ./setup-nerdfonts.sh
-```
-
-- **Install Oh my ZSH**:
-
-```sh
-curl -o setup-zsh.sh https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/termux/setup/setup-zsh.sh && chmod 755 ./setup-zsh.sh && sh ./setup-zsh.sh
-```
-
-- **Install Neovim**:
-
-```sh
-curl -o setup-neovim.sh https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/termux/setup/setup-neovim.sh && chmod 755 ./setup-neovim.sh && sh ./setup-neovim.sh
-```
-
-- **Install Python packages**:
-
-_Streamlit & Jupyter_
-
-```sh
-curl -o setup-py-data-venv.sh https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/termux/setup/setup-py-data-venv.sh && chmod 755 ./setup-py-data-venv.sh && sh ./setup-py-data-venv.sh ~/Documents/repos/notebooks
-```
+2. Setup password with `passwd`
+3. Find your username with `whoami`
+4. Find the host by running `ipconfig`
+5. Use `sshd` to start tha ssh server
+6. connect with`ssh <username>@<host> -p8022`
