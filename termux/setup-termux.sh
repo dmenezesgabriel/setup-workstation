@@ -64,10 +64,10 @@ install_dependencies() {
 
     pkg update && pkg upgrade -y
 
-    yes | pkg install x11-repo
+    yes | pkg install x11-repo tur-repo build-essential binutils pkg-config
     yes | pkg update
 
-    pkg install -y \
+    pkg install --fix-policy -y \
         dbus \
         proot \
         proot-distro \
@@ -84,9 +84,32 @@ install_dependencies() {
         tmux \
         vim \
         build-essential \
+        libandroid-execinfo \
+        libarrow-cpp \
+        make \
+        clang \
+        ninja \
+        rust \
+        libffi \
+        binutils \
+        libzmq \
+        libjpeg-turbo \
         python \
         python-pip \
-        nodejs-lts
+        python-numpy \
+        python-pandas \
+        python-pyarrow \
+        python-scipy \
+        nodejs-lts \
+        code-server
+}
+
+setup_zsh() {
+    create_separator "Setup Oh My ZSH"
+
+    sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
 }
 
 create_python_venv() {
@@ -161,6 +184,8 @@ main() {
 
     install_dependencies
 
+    setup_zsh
+
     create_python_venv
 
     setup_proot_distro
@@ -169,7 +194,6 @@ main() {
     add_extra_keyboard_keys
 
     termux-reload-settings
-    termux-setup-storage
 
     create_separator "Finish"
 
