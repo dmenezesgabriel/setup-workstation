@@ -20,6 +20,7 @@ create_separator() {
     echo -e "${GREEN}${separator} ${text} ${separator}${NC}\n"
 }
 
+# TODO: not working
 add_extra_keyboard_keys() {
     create_separator "Add extra keyboard keys"
 
@@ -28,7 +29,7 @@ add_extra_keyboard_keys() {
         echo "Created directory: $TERMUXX_DIR"
     fi
 
-    echo "$EXTRA_KEYS" > "$TERMUXX_PROPERTIES"
+    echo "$EXTRA_KEYS" | tee -a "$TERMUXX_PROPERTIES" > /dev/null
 }
 
 add_nerd_fonts() {
@@ -123,6 +124,13 @@ setup_proot_distro() {
     sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
     echo "exec zsh" > ~/.bashrc
 
+    # Install NVM (Node Version Manager) non-interactively
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+
+    # Install Node.js via NVM (default version)
+    nvm install --lts
+    nvm use --lts
+
     curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
     . ~/.nix-profile/etc/profile.d/nix.sh
     echo '. ~/.nix-profile/etc/profile.d/nix.sh' >> ~/.zshrc
@@ -135,7 +143,7 @@ setup_proot_distro() {
     hello
     cowsay "Nix is installed and working!"
 EOF
-
+    # TODO: not working
     proot-distro login ubuntu -- /bin/bash << EOF
     echo "exec su - $username" > ~/.bashrc
 EOF
@@ -151,14 +159,14 @@ main() {
     read -r -p "Enter password for $username: " password </dev/tty
     echo "Password entered: [hidden]"
 
-    add_extra_keyboard_keys
-    add_nerd_fonts
-
     install_dependencies
 
     create_python_venv
 
     setup_proot_distro
+
+    add_nerd_fonts
+    add_extra_keyboard_keys
 
     termux-reload-settings
     termux-setup-storage

@@ -4,11 +4,16 @@ pkgs.mkShell {
   name = "termux-dev-env";
 
   buildInputs = [
-    pkgs.git          # Git for version control
-    pkgs.vim          # Vim text editor
-    pkgs.htop         # Htop for system monitoring
-    pkgs.nix          # Nix package manager
-    pkgs.zsh          # Zsh shell
-    pkgs.code-server  # Code-server for remote VS Code
+    pkgs.git
+    pkgs.vim
+    pkgs.htop
+    pkgs.nix
+    pkgs.zsh
+    pkgs.ncdu
+    pkgs.code-server
   ];
+
+  shellHook = ''
+    zsh
+  '';
 }
