@@ -4,6 +4,7 @@
     "window.titleBarStyle": "custom",
     "window.commandCenter": false,
     "workbench.layoutControl.enabled": false,
+    "window.title": "${folderName}/${activeEditorShort}",
     // Theme
     "workbench.colorTheme": "Min Dark",
     "workbench.iconTheme": "symbols",
@@ -42,6 +43,7 @@
         "strings": "on",
         "other": "on"
     },
+    "editor.autoClosingBrackets": "always",
     // Startup
     "workbench.startupEditor": "newUntitledFile",
     "update.showReleaseNotes": false,
@@ -225,7 +227,6 @@
         "editor.detectIndentation": false,
         "editor.tabSize": 2,
         "editor.insertSpaces": true,
-        "editor.defaultFormatter": "redhat.vscode-xml"
     },
     "[javascript]": {
         "editor.detectIndentation": false,
@@ -259,75 +260,108 @@
     // Spelling
     "cSpell.language": ",pt,pt_BR,en_US",
     "cSpell.enabled": true,
-    "cSpell.userWords": [
-        "behaviour",
-        "psycopg",
-        "Tambem"
-    ],
-    "cSpell.enabledLanguageIds": [
-        "asciidoc",
-        "c",
-        "cpp",
-        "csharp",
-        "css",
-        "git-commit",
-        "go",
-        "graphql",
-        "handlebars",
-        "haskell",
-        "html",
-        "jade",
-        "java",
-        "javascript",
-        "javascriptreact",
-        "json",
-        "jsonc",
-        "latex",
-        "less",
-        "markdown",
-        "md",
-        "php",
-        "plaintext",
-        "python",
-        "pug",
-        "restructuredtext",
-        "rust",
-        "scala",
-        "scss",
-        "text",
-        "typescript",
-        "typescriptreact",
-        "yaml",
-        "yml",
-        "ipynb",
-        "jupyter"
-    ],
-    "cSpell.allowedSchemas": [
-        "file",
-        "gist",
-        "sftp",
-        "untitled",
-        "ipynb"
-    ],
-    // Live Server
-    "liveServer.settings.donotVerifyTags": true,
-    "liveServer.settings.donotShowInfoMsg": true,
+    "cSpell.enabledFileTypes": {
+        "asciidoc": true,
+        "c": true,
+        "cpp": true,
+        "csharp": true,
+        "css": true,
+        "git-commit": true,
+        "go": true,
+        "graphql": true,
+        "handlebars": true,
+        "haskell": true,
+        "html": true,
+        "jade": true,
+        "java": true,
+        "javascript": true,
+        "javascriptreact": true,
+        "json": true,
+        "jsonc": true,
+        "latex": true,
+        "less": true,
+        "markdown": true,
+        "md": true,
+        "php": true,
+        "plaintext": true,
+        "python": true,
+        "pug": true,
+        "restructuredtext": true,
+        "rust": true,
+        "scala": true,
+        "scss": true,
+        "text": true,
+        "typescript": true,
+        "typescriptreact": true,
+        "yaml": true,
+        "yml": true,
+        "ipynb": true,
+        "jupyter": true
+    },
+    "cSpell.enabledSchemes": {
+        "file:": true,
+        "gist:": true,
+        "sftp:": true,
+        "untitled:": true,
+        "ipynb": true
+    },
     // Git
     "git.ignoreMissingGitWarning": true,
-    "gitlens.advanced.messages": {
-        "suppressGitMissingWarning": true
-    },
-    "gitlens.telemetry.enabled": false,
     // Prettier
     "prettier.printWidth": 80,
     //  ESLint
     "eslint.format.enable": true,
     // Telemetry
     "telemetry.telemetryLevel": "off",
-    "redhat.telemetry.enabled": false,
     // Notebook
     "notebook.diff.overviewRuler": true,
     "notebook.formatOnSave.enabled": true,
     // Marp
     "markdown.marp.enableHtml": true,
+    "git.openRepositoryInParentFolders": "never",
+    "auto-rename-tag.activationOnLanguage": [
+        "*"
+    ],
+    "terminal.integrated.env.linux": {},
+    "console-ninja.featureSet": "Community",
+    // Vim
+    "vim.smartRelativeLine": true,
+    "vim.insertModeKeyBindingsNonRecursive": [
+        {
+            "before": [
+                "<Esc>"
+            ],
+            "after": [
+                "<Esc>"
+            ],
+            "commands": [
+                "workbench.action.files.save"
+            ]
+        },
+        {
+            "before": [
+                "H"
+            ], // Focus previous tab at the left
+            "commands": [
+                "workbench.action.previousEditor"
+            ]
+        },
+        {
+            "before": [
+                "L"
+            ], // Focus next tab at the right
+            "commands": [
+                "workbench.action.nextEditor"
+            ]
+        },
+        {
+            "before": [
+                "Q"
+            ], // Close current tab
+            "after": [
+                "<C-w>",
+                "q"
+            ]
+        }
+    ],
 }
