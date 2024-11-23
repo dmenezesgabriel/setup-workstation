@@ -6,6 +6,8 @@ cat <<EOF | xargs -L 1 code --install-extension
 bierner.emojisense
 bradlc.vscode-tailwindcss
 dbaeumer.vscode-eslint
+dendron.dendron
+dendron.dendron-paste-image
 esbenp.prettier-vscode
 formulahendry.auto-rename-tag
 hashicorp.terraform
@@ -33,7 +35,9 @@ prisma.prisma
 shardulm94.trailing-spaces
 streetsidesoftware.code-spell-checker
 streetsidesoftware.code-spell-checker-portuguese-brazilian
+vitest.explorer
 vscodevim.vim
+vue.volar
 wallabyjs.console-ninja
 wallabyjs.quokka-vscode
 yandeu.five-server

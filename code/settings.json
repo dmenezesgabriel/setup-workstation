@@ -13,11 +13,11 @@
     "editor.fontFamily": "'JetBrains Mono', monospace",
     "editor.fontSize": 14,
     "editor.lineHeight": 1.8,
-    "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
+    //  Editor
+    "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "editor.formatOnType": true,
-    //  Editor
     "editor.rulers": [
         80,
         120
@@ -88,6 +88,15 @@
         }
     },
     "terminal.integrated.defaultProfile.linux": "zsh",
+    "terminal.integrated.automationProfile.linux": {
+        "path": "tmux",
+        "args": [
+            "new-session",
+            "-A",
+            "-s",
+            "vscode:${workspaceFolder}"
+        ]
+    },
     "terminal.integrated.profiles.windows": {
         "PowerShell": {
             "source": "PowerShell",
@@ -364,4 +373,5 @@
             ]
         }
     ],
+    "window.newWindowProfile": "Default",
 }

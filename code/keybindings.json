@@ -3,5 +3,15 @@
     {
         "key": "ctrl+alt+q",
         "command": "sqltools.executeCurrentQuery"
+    },
+    {
+        "key": "ctrl+e",
+        "command": "workbench.action.focusActiveEditorGroup",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+e",
+        "command": "workbench.action.terminal.focus",
+        "when": "!terminalFocus"
     }
 ]
