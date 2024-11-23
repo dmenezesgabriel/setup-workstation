@@ -2,6 +2,24 @@
 
 ## nice shortcuts
 
+- **Go to start of line**
+
+```sh
+Fn + LeftArrowKey
+```
+
+- **Go to end of line**
+
+```sh
+Fn + RightArrowKey
+```
+
+- **Go to line**:
+
+```sh
+CTRL + G
+```
+
 - **Split editors**:
 
 ```sh
