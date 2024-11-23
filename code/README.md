@@ -2,6 +2,18 @@
 
 ## nice shortcuts
 
+- **Search in editor**:
+
+```sh
+CTRL + F
+```
+
+- **Search and replace in editor**:
+
+```sh
+CTRL + H
+```
+
 - **Go to start of line**
 
 ```sh
