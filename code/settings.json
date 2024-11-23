@@ -5,9 +5,6 @@
     "window.commandCenter": false,
     "workbench.layoutControl.enabled": false,
     "window.title": "${folderName}/${activeEditorShort}",
-    // Theme
-    "workbench.colorTheme": "Min Dark",
-    "workbench.iconTheme": "symbols",
     "symbols.hidesExplorerArrows": false,
     // Fonts
     "editor.fontFamily": "'JetBrains Mono', monospace",
@@ -55,7 +52,9 @@
     "explorer.fileNesting.patterns": {
         "tsconfig.json": "tsconfig.*.json",
         "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb",
-        ".env": ".env*"
+        ".env": ".env*",
+        ".prettierrc": ".prettier*",
+        "eslint.config.mjs": ".eslint*"
     },
     "files.exclude": {
         "**/.classpath": true,
@@ -374,4 +373,6 @@
         }
     ],
     "window.newWindowProfile": "Default",
+    "workbench.iconTheme": "symbols",
+    "workbench.colorTheme": "Min Dark",
 }
