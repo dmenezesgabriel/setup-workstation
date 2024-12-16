@@ -71,7 +71,8 @@
     },
     // Tabs
     "workbench.editor.labelFormat": "short",
-    "window.customTitleBarVisibility": "auto",
+    "workbench.editor.showTabs": "none",
+    "window.customTitleBarVisibility": "never",
     // Terminal
     "terminal.integrated.fontSize": 14,
     "terminal.integrated.fontFamily": "'JetBrains Mono', monospace",
