@@ -71,8 +71,8 @@
     },
     // Tabs
     "workbench.editor.labelFormat": "short",
-    "workbench.editor.showTabs": "none",
-    "window.customTitleBarVisibility": "never",
+    // "workbench.editor.showTabs": "none",
+    "window.customTitleBarVisibility": "auto",
     // Terminal
     "terminal.integrated.fontSize": 14,
     "terminal.integrated.fontFamily": "'JetBrains Mono', monospace",
@@ -123,7 +123,8 @@
         ".env.*": "dotenv",
         ".prettierrc": "json",
         "*.css": "css",
-        ".dev.vars": "dotenv"
+        ".dev.vars": "dotenv",
+        "*.mdx": "markdown"
     },
     "symbols.files.associations": {
         "*.module.ts": "nest",
@@ -161,6 +162,7 @@
     "typescript.updateImportsOnFileMove.enabled": "always",
     "typescript.suggest.autoImports": true,
     "typescript.autoClosingTags": true,
+    "typescript.preferences.preferTypeOnlyAutoImports": true,
     // HTML
     "html.format.wrapAttributes": "force-expand-multiline",
     "html.format.wrapLineLength": 80,
@@ -240,8 +242,11 @@
     "[javascript]": {
         "editor.detectIndentation": false,
         "editor.tabSize": 2,
+        "prettier.printWidth": 80,
         "editor.insertSpaces": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "prettier.bracketSameLine": false,
+        "prettier.bracketSpacing": true,
     },
     "[typescript]": {
         "editor.detectIndentation": false,
@@ -376,4 +381,32 @@
     "window.newWindowProfile": "Default",
     "workbench.iconTheme": "symbols",
     "workbench.colorTheme": "Min Dark",
+    "tailwindCSS.emmetCompletions": true,
+    "explorer.confirmDragAndDrop": false,
+    "sqltools.useNodeRuntime": true,
+    "chat.agent.enabled": true,
+    "mcp": {
+        "servers": {
+            "playwright": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "--init",
+                    "--pull=always",
+                    "mcr.microsoft.com/playwright/mcp"
+                ]
+            },
+            "sequentialthinking": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "--rm",
+                    "-i",
+                    "mcp/sequentialthinking"
+                ]
+            }
+        }
+    }
 }
