@@ -23,7 +23,6 @@
     "editor.fontLigatures": true,
     "editor.semanticHighlighting.enabled": false,
     "editor.minimap.enabled": false,
-    "breadcrumbs.enabled": true,
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
     },
@@ -127,7 +126,7 @@
         "*.mdx": "markdown"
     },
     "symbols.files.associations": {
-        "*.module.ts": "nest",
+        // "*.module.ts": "nest",
         "*.guard.ts": "typescript",
         "*.spec.ts": "ts-test",
         "*.e2e-spec.ts": "ts-test",
@@ -331,13 +330,12 @@
     "notebook.diff.overviewRuler": true,
     "notebook.formatOnSave.enabled": true,
     // Marp
-    "markdown.marp.enableHtml": true,
+    "markdown.marp.html": "all",
     "git.openRepositoryInParentFolders": "never",
     "auto-rename-tag.activationOnLanguage": [
         "*"
     ],
     "terminal.integrated.env.linux": {},
-    "console-ninja.featureSet": "Community",
     // Vim
     "vim.smartRelativeLine": true,
     "vim.insertModeKeyBindingsNonRecursive": [
@@ -380,33 +378,24 @@
     ],
     "window.newWindowProfile": "Default",
     "workbench.iconTheme": "symbols",
-    "workbench.colorTheme": "Min Dark",
     "tailwindCSS.emmetCompletions": true,
     "explorer.confirmDragAndDrop": false,
     "sqltools.useNodeRuntime": true,
+    "websearch.preferredEngine": "bing",
     "chat.agent.enabled": true,
-    "mcp": {
-        "servers": {
-            "playwright": {
-                "command": "docker",
-                "args": [
-                    "run",
-                    "-i",
-                    "--rm",
-                    "--init",
-                    "--pull=always",
-                    "mcr.microsoft.com/playwright/mcp"
-                ]
-            },
-            "sequentialthinking": {
-                "command": "docker",
-                "args": [
-                    "run",
-                    "--rm",
-                    "-i",
-                    "mcp/sequentialthinking"
-                ]
-            }
-        }
-    }
+    "github.copilot.nextEditSuggestions.enabled": false,
+    "github.copilot.enable": {
+        "quarto": false,
+        "*": true,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false,
+        "typescriptreact": true,
+        "python": true,
+        "typescript": false,
+        "jsonc": false
+    },
+    "python.analysis.typeCheckingMode": "off",
+    "workbench.colorTheme": "Min Dark",
+    "docker.extension.enableComposeLanguageServer": false
 }
