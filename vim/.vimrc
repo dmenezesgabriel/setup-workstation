@@ -1,5 +1,8 @@
 " vim -u .vimrc
 
+set noswapfile
+set nobackup
+
 " Encoding
 set encoding=UTF-8
 
@@ -18,10 +21,10 @@ filetype plugin indent on
 " Apply colors on editor
 syntax on
 
-" Use same tabstop size to indent visually
+" Use same tab stop size to indent visually
 set shiftwidth=2
 
-" Backspace usual behaviour
+" Backspace usual behavior
 set backspace=2
 
 set laststatus=2
@@ -83,7 +86,7 @@ au BufNewFile, BufRead *.py
     \ | set fileformat=unix
 
 " Typescript
-" tsconfig.json is actually jsonc, help TypeScript set the correct filetype
+" tsconfig.json is actually jsonc, help TypeScript set the correct file type
 autocmd BufRead,BufNewFile tsconfig.json set filetype=jsonc
 
 " Web
@@ -110,3 +113,11 @@ set wildmenu
 
 " Syntax Highlight
 au BufRead,BufNewFile, *.vue set syntax=html
+
+" Add better colors
+if (has("termguicolors"))
+  set termguicolors
+endif
+
+syntax enable
+

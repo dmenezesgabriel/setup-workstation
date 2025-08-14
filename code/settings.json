@@ -336,66 +336,19 @@
         "*"
     ],
     "terminal.integrated.env.linux": {},
-    // Vim
-    "vim.smartRelativeLine": true,
-    "vim.insertModeKeyBindingsNonRecursive": [
-        {
-            "before": [
-                "<Esc>"
-            ],
-            "after": [
-                "<Esc>"
-            ],
-            "commands": [
-                "workbench.action.files.save"
-            ]
-        },
-        {
-            "before": [
-                "H"
-            ], // Focus previous tab at the left
-            "commands": [
-                "workbench.action.previousEditor"
-            ]
-        },
-        {
-            "before": [
-                "L"
-            ], // Focus next tab at the right
-            "commands": [
-                "workbench.action.nextEditor"
-            ]
-        },
-        {
-            "before": [
-                "Q"
-            ], // Close current tab
-            "after": [
-                "<C-w>",
-                "q"
-            ]
-        }
-    ],
-    "window.newWindowProfile": "Default",
     "workbench.iconTheme": "symbols",
     "tailwindCSS.emmetCompletions": true,
     "explorer.confirmDragAndDrop": false,
-    "sqltools.useNodeRuntime": true,
-    "websearch.preferredEngine": "bing",
     "chat.agent.enabled": true,
     "github.copilot.nextEditSuggestions.enabled": false,
     "github.copilot.enable": {
-        "quarto": false,
         "*": true,
         "plaintext": false,
         "markdown": false,
-        "scminput": false,
         "typescriptreact": true,
         "python": true,
         "typescript": false,
-        "jsonc": false
     },
     "python.analysis.typeCheckingMode": "off",
     "workbench.colorTheme": "Min Dark",
-    "docker.extension.enableComposeLanguageServer": false
 }
