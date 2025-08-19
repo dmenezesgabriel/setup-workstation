@@ -69,8 +69,12 @@ vim.opt.path:append("**")          -- include subdirectories in search
 
 -- files and performance
 vim.opt.undofile = true            -- persist undo
-vim.opt.backup = true              -- keep backup files
-vim.opt.swapfile = true            -- keep swap files
+vim.opt.undodir = vim.fn.expand(   -- undo directory
+    "~/.vim/undodir"
+)
+vim.opt.backup = false             -- don't create backup files
+vim.opt.writebackup = false        -- don't create backup before writing
+vim.opt.swapfile = false           -- don't keep swap files
 vim.opt.updatetime = 300           -- faster completion
 vim.opt.timeoutlen = 500           -- key timeout duration
 vim.opt.ttimeoutlen = 0            -- key code timeout
@@ -81,6 +85,16 @@ vim.opt.clipboard = "unnamedplus"  -- system clipboard
 
 -- completion
 vim.opt.wildmenu = true            -- enhanced command-line completion
+vim.opt.wildmode = "longest:full,full"
+vim.opt.wildignore:append(
+    {
+        "*.o",
+        "*.obj",
+        "*.pyc",
+        "*.class",
+        "*.jar",
+    }
+)
 vim.opt.completeopt = {
     "menuone",
     "noinsert",
@@ -89,7 +103,138 @@ vim.opt.completeopt = {
 
 vim.opt.iskeyword:append("-")      -- treat dash as part of word
 
-vim.g.mapleader = " "
+vim.g.mapleader = " "              -- set leader key to space
 vim.opt.lazyredraw = true          -- don't redraw during macros
 vim.opt.synmaxcol = 300            -- syntax highlight limit
 vim.opt.encoding = "UTF-8"
+
+-- performance improvements
+vim.opt.redrawtime = 10000
+vim.opt.maxmempattern = 20000
+
+-- tabs
+vim.opt.showtabline = 1            -- always show tabline
+vim.opt.tabline = ""               -- use default tabline
+
+-- copy full file path
+-- space + pa + '+'
+vim.keymap.set(
+    "n",
+    "<leader>pa",
+    function()
+       local path = vim.fn.expand("%:p")
+       vim.fn.setreg("+", path)
+       print("file:", path)
+   end
+)
+
+
+-- return to last position when opening files
+vim.api.nvim_create_autocmd("BufReadPost", {
+        group = augroup,
+        callback = function()
+            local mark = vim.api.nvim_buf_get_mark(0, '"')
+            local lcount = vim.api.nvim_buf_line_count(0)
+            if mark[1] > 0 and mark[1] <= lcount then
+                pcall(vim.api.nvim_win_set_cursor, 0, mark)
+            end
+        end,
+    }
+)
+
+
+-- create directories when saving files
+vim.api.nvim_create_autocmd("BufWritePre", {
+        group = augroup,
+        callback = function()
+            local dir = vim.fn.expand("<afile>:p:h")
+            if vim.fn.isdirectory(dir) == 0 then
+                vim.fn.mkdir(dir, "p")
+            end
+        end,
+    }
+)
+
+
+-- creatre undo directory if it does not exist
+local undodir = vim.fn.expand("~/.vim/undodir")
+if vim.fn.isdirectory(undodir) == 0 then 
+    vim.fn.mkdir(undodir, "p")
+end
+
+-- Function to find project root
+local function find_root(patterns)
+  local path = vim.fn.expand('%:p:h')
+  local root = vim.fs.find(patterns, { path = path, upward = true })[1]
+  return root and vim.fn.fnamemodify(root, ':h') or path
+end
+
+
+-- Python LSP setup
+local function setup_python_lsp()
+  vim.lsp.start({
+    name = 'pylsp',
+
+    cmd = { vim.fn.expand("~/environments/general/bin/pylsp") },
+    filetypes = {'python'},
+    root_dir = find_root({
+        'pyproject.toml',
+        'setup.py',
+        'setup.cfg',
+        'requirements.txt',
+        '.git'
+    }),
+    settings = {
+      pylsp = {
+        plugins = { 
+          pycodestyle = {
+              enabled = false
+          },
+          flake8 = {
+              enabled = true,
+          },
+          black = { 
+              enabled = true
+          }
+        }
+      }
+    }
+  })
+end
+
+-- Auto-start LSPs based on filetype
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'python',
+  callback = setup_python_lsp,
+  desc = 'Start Python LSP'
+})
+
+
+-- LSP keymaps
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(ev)
+    local opts = { buffer = ev.buf }
+
+    -- Go to definition
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+
+    -- Show references
+    vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+
+    -- Hover docs
+    vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+
+    -- Go to implementation
+    vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+
+    -- Signature help
+    vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
+
+    -- Rename symbol
+    vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+
+    -- Code actions
+    vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+  end,
+})
+
