@@ -174,8 +174,11 @@ end
 local function setup_python_lsp()
   vim.lsp.start({
     name = 'pylsp',
-
-    cmd = { vim.fn.expand("~/environments/general/bin/pylsp") },
+    cmd = {
+        vim.fn.expand(
+        "~/environments/general/bin/pylsp" -- install "python-lsp-server[all]"
+        )
+    },
     filetypes = {'python'},
     root_dir = find_root({
         'pyproject.toml',
