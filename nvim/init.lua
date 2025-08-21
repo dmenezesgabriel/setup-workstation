@@ -116,6 +116,14 @@ vim.opt.maxmempattern = 20000
 vim.opt.showtabline = 1            -- always show tabline
 vim.opt.tabline = ""               -- use default tabline
 
+
+-- ===========================================================================
+-- Functions
+-- ===========================================================================
+
+-- Basic autocommands
+local augroup = vim.api.nvim_create_augroup("UserConfig", {})
+
 -- copy full file path
 -- space + pa + '+'
 vim.keymap.set(
@@ -155,6 +163,13 @@ vim.api.nvim_create_autocmd("BufWritePre", {
     }
 )
 
+-- auto-resize splits when window is resized
+vim.api.nvim_create_autocmd("VimResized", {
+    group = augroup,
+    callback = function()
+        vim.cmd("tabdo wincmd = ")
+    end,
+})
 
 -- creatre undo directory if it does not exist
 local undodir = vim.fn.expand("~/.vim/undodir")
@@ -169,6 +184,32 @@ local function find_root(patterns)
   return root and vim.fn.fnamemodify(root, ':h') or path
 end
 
+-- ===========================================================================
+-- Language options
+-- ===========================================================================
+
+vim.api.nvim_create_autocmd("FileType", {
+    group = augroup,
+    pattern = { "lua", "python" },
+    callback = function()
+        vim.opt_local.tabstop = 4
+        vim.opt_local.shiftwidth = 4
+    end,
+})
+
+
+vim.api.nvim_create_autocmd("FileType", {
+    group = augroup,
+    pattern = { "javascript", "typescript", "json", "html", "css" },
+    callback = function()
+        vim.opt_local.tabstop = 2
+        vim.opt_local.shiftwidth = 2
+    end,
+})
+
+-- ===========================================================================
+-- LSP
+-- ===========================================================================
 
 -- Python LSP setup
 local function setup_python_lsp()
@@ -247,30 +288,17 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
     -- Trigger completion
     vim.keymap.set('i', '<C-Space>', '<C-x><C-o>', opts)
-
-    -- Trigger completion (our custom engine below will handle this)
-    vim.keymap.set('i', '<C-Space>', function()
-      local pos = vim.api.nvim_win_get_cursor(0)
-      local col = pos[2]
-
-      -- Build request params for current position
-      local params = vim.lsp.util.make_position_params()
-
-      vim.lsp.buf_request(0, "textDocument/completion", params, function(err, result, ctx, _)
-        if err or not result then return end
-        local items = vim.lsp.util.extract_completion_items(result)
-
-        if not items or vim.tbl_isempty(items) then return end
-
-        local labels = {}
-        for _, item in ipairs(items) do
-          table.insert(labels, item.label)
-        end
-
-        -- Open completion menu at cursor+1 with these labels
-        vim.fn.complete(col + 1, labels)
-      end)
-    end, opts)
 end,
 })
 
+-- LSP Info command
+vim.api.nvim_create_user_command('LspInfo', function()
+  local clients = vim.lsp.get_clients({ bufnr = 0 })
+  if #clients == 0 then
+    print("No LSP clients attached to current buffer")
+  else
+    for _, client in ipairs(clients) do
+      print("LSP: " .. client.name .. " (ID: " .. client.id .. ")")
+    end
+  end
+end, { desc = 'Show LSP client info' })

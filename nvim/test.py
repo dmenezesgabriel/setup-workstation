@@ -2,7 +2,7 @@ import os
 
 
 def hello():
-    print(os.getcwdb())
+    print(os.getcwd())
 
 
 if __name__ == '__main__':
