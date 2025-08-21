@@ -48,7 +48,7 @@ vim.opt.splitright = true
 
 -- tab size
 vim.opt.tabstop = 4                -- spaces per tab
-vim.opt.softtabstop = 4        
+vim.opt.softtabstop = 4
 vim.opt.shiftwidth = 4             -- spaces per indent
 vim.opt.expandtab = true           -- use spaces
 vim.opt.smartindent = true         -- smart auto-indent
@@ -158,7 +158,7 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 
 -- creatre undo directory if it does not exist
 local undodir = vim.fn.expand("~/.vim/undodir")
-if vim.fn.isdirectory(undodir) == 0 then 
+if vim.fn.isdirectory(undodir) == 0 then
     vim.fn.mkdir(undodir, "p")
 end
 
@@ -189,16 +189,19 @@ local function setup_python_lsp()
     }),
     settings = {
       pylsp = {
-        plugins = { 
+        plugins = {
           pycodestyle = {
               enabled = false
           },
           flake8 = {
               enabled = true,
           },
-          black = { 
+          black = {
               enabled = true
-          }
+          },
+          jedi_completion = {
+            enabled = true
+          },
         }
       }
     }
@@ -217,6 +220,9 @@ vim.api.nvim_create_autocmd('FileType', {
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(ev)
     local opts = { buffer = ev.buf }
+
+    -- Set omnifunc to use LSP
+    vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
 
     -- Go to definition
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
@@ -238,6 +244,33 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
     -- Code actions
     vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-  end,
+
+    -- Trigger completion
+    vim.keymap.set('i', '<C-Space>', '<C-x><C-o>', opts)
+
+    -- Trigger completion (our custom engine below will handle this)
+    vim.keymap.set('i', '<C-Space>', function()
+      local pos = vim.api.nvim_win_get_cursor(0)
+      local col = pos[2]
+
+      -- Build request params for current position
+      local params = vim.lsp.util.make_position_params()
+
+      vim.lsp.buf_request(0, "textDocument/completion", params, function(err, result, ctx, _)
+        if err or not result then return end
+        local items = vim.lsp.util.extract_completion_items(result)
+
+        if not items or vim.tbl_isempty(items) then return end
+
+        local labels = {}
+        for _, item in ipairs(items) do
+          table.insert(labels, item.label)
+        end
+
+        -- Open completion menu at cursor+1 with these labels
+        vim.fn.complete(col + 1, labels)
+      end)
+    end, opts)
+end,
 })
 
