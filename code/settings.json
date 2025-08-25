@@ -70,7 +70,7 @@
     },
     // Tabs
     "workbench.editor.labelFormat": "short",
-    // "workbench.editor.showTabs": "none",
+    "workbench.editor.showTabs": "none",
     "window.customTitleBarVisibility": "auto",
     // Terminal
     "terminal.integrated.fontSize": 14,
@@ -266,10 +266,6 @@
             "source.formatAll.terraform": "explicit"
         }
     },
-    "[prisma]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "Prisma.prisma"
-    },
     // Spelling
     "cSpell.language": ",pt,pt_BR,en_US",
     "cSpell.enabled": true,
@@ -336,7 +332,6 @@
         "*"
     ],
     "terminal.integrated.env.linux": {},
-    "workbench.iconTheme": "symbols",
     "tailwindCSS.emmetCompletions": true,
     "explorer.confirmDragAndDrop": false,
     "chat.agent.enabled": true,
@@ -344,11 +339,35 @@
     "github.copilot.enable": {
         "*": true,
         "plaintext": false,
-        "markdown": false,
+        "markdown": true,
+        "scminput": false,
         "typescriptreact": true,
         "python": true,
-        "typescript": false,
+        "typescript": false
     },
-    "python.analysis.typeCheckingMode": "off",
-    "workbench.colorTheme": "Min Dark",
+    "python.analysis.typeCheckingMode": "strict",
+    // vim
+    "editor.lineNumbers": "relative",
+    "vim.leader": "<space>",
+    "vim.handleKeys": {
+        "<C-f>": false,
+        "<C-h>": false,
+        "<C-p>": false,
+        "<C-d>": false,
+        "<C-j>": false,
+        "<C-w>": false
+    },
+    "vim.normalModeKeyBindings": [
+        {
+            "before": [
+                "<leader>",
+                "p"
+            ],
+            "commands": [
+                "workbench.action.quickOpen"
+            ]
+        },
+    ],
+    "workbench.colorTheme": "Catppuccin Macchiato",
+    "workbench.iconTheme": "catppuccin-latte"
 }

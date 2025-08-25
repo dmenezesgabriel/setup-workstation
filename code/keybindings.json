@@ -1,10 +1,6 @@
 // Place your key bindings in this file to override the defaults
 [
     {
-        "key": "ctrl+alt+q",
-        "command": "sqltools.executeCurrentQuery"
-    },
-    {
         "key": "ctrl+e",
         "command": "workbench.action.focusActiveEditorGroup",
         "when": "terminalFocus"
