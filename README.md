@@ -1,7 +1,5 @@
 # Setup Workstation
 
-# Setup Workstation
-
 ## Vim
 
 ```sh
