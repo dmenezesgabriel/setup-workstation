@@ -27,6 +27,7 @@ wget -O ~/.config/nvim/init.lua https://raw.githubusercontent.com/dmenezesgabrie
 or
 
 ```sh
+mkdir -p ~/.config/nvim
 [ -f ~/.config/nvim/init.lua ] && mv ~/.config/nvim/init.lua ~/.config/nvim/init.lua.bak
 curl -o ~/.config/nvim/init.lua https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/nvim/init.lua
 ```

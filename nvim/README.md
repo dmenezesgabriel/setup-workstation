@@ -1,5 +1,9 @@
 # Nvim
 
+```sh
+nvim -u init.lua init.lua
+```
+
 ## Commands
 
 ### Explore
