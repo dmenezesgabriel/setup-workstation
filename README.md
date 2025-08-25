@@ -1,24 +1,72 @@
 # Setup Workstation
 
-Useful installation scripts for linux
+# Setup Workstation
 
-> :warning: **Work in progress**: Some scripts may not be finished!
-
-## Termux
-
-**setup**:
+## Vim
 
 ```sh
-rm setup-termux.sh && \
-wget -O setup-termux.sh https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/termux/setup-termux.sh && \
-chmod +x setup-termux.sh && \
-sh setup-termux.sh
+# .vimrc → ~/.vimrc
+[ -f ~/.vimrc ] && mv ~/.vimrc ~/.vimrc.bak
+wget -O ~/.vimrc https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/vim/.vimrc
 ```
 
-**Nix default**:
+or
 
 ```sh
-wget https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/termux/nix/default.nix
+[ -f ~/.vimrc ] && mv ~/.vimrc ~/.vimrc.bak
+curl -o ~/.vimrc https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/vim/.vimrc
+```
+
+## Neovim
+
+```sh
+# init.lua → ~/.config/nvim/init.lua
+mkdir -p ~/.config/nvim
+[ -f ~/.config/nvim/init.lua ] && mv ~/.config/nvim/init.lua ~/.config/nvim/init.lua.bak
+wget -O ~/.config/nvim/init.lua https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/nvim/init.lua
+```
+
+or
+
+```sh
+[ -f ~/.config/nvim/init.lua ] && mv ~/.config/nvim/init.lua ~/.config/nvim/init.lua.bak
+curl -o ~/.config/nvim/init.lua https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/nvim/init.lua
+```
+
+## Bash
+
+```sh
+# .bashrc → ~/.bashrc
+[ -f ~/.bashrc ] && mv ~/.bashrc ~/.bashrc.bak
+wget -O ~/.bashrc https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/bash/.bashrc
+```
+
+or
+
+```sh
+[ -f ~/.bashrc ] && mv ~/.bashrc ~/.bashrc.bak
+curl -o ~/.bashrc https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/bash/.bashrc
+```
+
+## Tmux
+
+```sh
+# .tmux.conf → ~/.tmux.conf
+[ -f ~/.tmux.conf ] && mv ~/.tmux.conf ~/.tmux.conf.bak
+wget -O ~/.tmux.conf https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/tmux/.tmux.conf
+```
+
+or
+
+```sh
+[ -f ~/.tmux.conf ] && mv ~/.tmux.conf ~/.tmux.conf.bak
+curl -o ~/.tmux.conf https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/master/tmux/.tmux.conf
+```
+
+## Useful commands
+
+```sh
+tree -L 2 -I "node_modules" -a
 ```
 
 ## Resources
