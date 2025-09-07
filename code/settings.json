@@ -1,5 +1,18 @@
 {
+    "breadcrumbs.enabled": false,
+    "update.enableWindowsBackgroundUpdates": false,
+    "typescript.surveys.enabled": false,
+    "workbench.enableExperiments": false,
+    "workbench.editor.enablePreview": false,
+    // Telemetry
+    "telemetry.editStats.details.enabled": false,
+    "telemetry.editStats.enabled": false,
+    "telemetry.editStats.showDecorations": false,
+    "telemetry.editStats.showStatusBar": false,
+    "telemetry.feedback.enabled": false,
+    "redhat.telemetry.enabled": false,
     //  Window
+    "window.menuBarVisibility": "compact",
     "window.zoomLevel": 0,
     "window.titleBarStyle": "custom",
     "window.commandCenter": false,
@@ -12,6 +25,9 @@
     "editor.lineHeight": 1.8,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     //  Editor
+    "editor.codeLens": false,
+    "editor.accessibilitySupport": "off",
+    "editor.copyWithSyntaxHighlighting": false,
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "editor.formatOnType": true,
@@ -70,7 +86,7 @@
     },
     // Tabs
     "workbench.editor.labelFormat": "short",
-    "workbench.editor.showTabs": "none",
+    // "workbench.editor.showTabs": "none",
     "window.customTitleBarVisibility": "auto",
     // Terminal
     "terminal.integrated.fontSize": 14,
@@ -355,7 +371,7 @@
         "<C-p>": false,
         "<C-d>": false,
         "<C-j>": false,
-        "<C-w>": false
+        // "<C-w>": false
     },
     "vim.normalModeKeyBindings": [
         {
@@ -368,6 +384,6 @@
             ]
         },
     ],
-    "workbench.colorTheme": "Catppuccin Macchiato",
-    "workbench.iconTheme": "catppuccin-latte"
+    "workbench.iconTheme": "catppuccin-macchiato",
+    "workbench.colorTheme": "Catppuccin Macchiato"
 }
