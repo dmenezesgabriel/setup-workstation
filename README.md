@@ -71,3 +71,4 @@ tree -L 2 -I "node_modules" -a
 ## Resources
 
 - [ubuntu-x11-app.sh](https://github.com/01101010110/proot-distro-scripts/blob/main/ubuntu-x11-app.sh)
+- [hendrikmi/dotfiles](https://github.com/hendrikmi/dotfiles)
