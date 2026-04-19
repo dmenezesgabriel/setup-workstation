@@ -30,3 +30,12 @@ sh setup-termux.sh
 ```sh
 wget https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/termux/nix/default.nix
 ```
+
+**Linux Desktop**:
+
+```sh
+rm linux-desktop.sh && \
+wget -O linux-desktop.sh https://raw.githubusercontent.com/dmenezesgabriel/setup-workstation/refs/heads/master/termux/linux-desktop.sh && \
+chmod +x linux-desktop.sh && \
+sh linux-desktop.sh
+```
