@@ -82,7 +82,6 @@ COMPLETE
     echo -e "   ${GREEN}clang  make  cmake  ninja  rust  pkg-config  patchelf${NC}"
     echo -e "   ${GREEN}python  uv  jupyterlab  numpy  pandas  scipy  scikit-learn${NC}"
     echo -e "   ${GREEN}nodejs  pnpm${NC}"
-    echo -e "   ${GREEN}dbt (core + postgres adapter)${NC}"
     echo -e "   ${GREEN}duckdb (system lib installed; python bindings may require manual build)${NC}"
     echo ""
     local device_ip
