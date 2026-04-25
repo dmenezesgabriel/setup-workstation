@@ -4,6 +4,7 @@ set -uo pipefail
 # Orchestrator for modular linux-desktop installer
 RUN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export RUN_DIR
+# shellcheck source=lib.sh
 source "${RUN_DIR}/lib.sh"
 
 main() {
@@ -25,10 +26,10 @@ main() {
     fi
 
     # Run scripts in scripts/ in lexical order (prefixed numeric)
-    local scripts
-    scripts=("${RUN_DIR}/scripts"/*.sh)
-
-    for s in "${scripts[@]}"; do
+    # Iterate the glob directly and guard missing files so we don't accidentally pass
+    # a literal pattern when no scripts exist.
+    for s in "${RUN_DIR}/scripts"/*.sh; do
+        [ -f "${s}" ] || continue
         run_step_script "${s}"
     done
 

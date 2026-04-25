@@ -1,4 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
+# shellcheck disable=SC2034
 # Shared helpers for linux-desktop modular installer
 set -uo pipefail
 
@@ -10,6 +11,8 @@ REPO_ROOT="${REPO_ROOT:-$(cd "${RUN_DIR}/.." && pwd)}"
 CONFIG_DIR="${CONFIG_DIR:-${REPO_ROOT}/config}"
 LOG_FILE="${LOG_FILE:-${RUN_DIR}/linux-desktop-install.log}"
 
+# Persistent state and flags
+# shellcheck disable=SC2034
 FAILED_STEPS=()
 PYTHON_VER=""
 CURRENT_STEP=0
@@ -21,6 +24,7 @@ DEBUG=${DEBUG:-0}
 FAILED_FILE="${RUN_DIR}/.failed_steps"
 
 # ====== COLOURS ======
+# shellcheck disable=SC2034
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -107,23 +111,81 @@ update_progress() {
     echo ""
 }
 
-# ====== SPINNER ======
+# ====== SPINNER & RUN-WRAPPERS ======
 spinner() {
     local pid=$1 message=$2
     local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏' i=0
+    local rc
     while kill -0 "${pid}" 2>/dev/null; do
         i=$(( (i + 1) % 10 ))
         printf "\r  ${YELLOW}⏳${NC} %-52s ${CYAN}${spin:$i:1}${NC}  " "${message}"
         sleep 0.1
     done
-    wait "${pid}"; local rc=$?
+    wait "${pid}"; rc=$?
     if [ "${rc}" -eq 0 ]; then
         printf "\r  ${GREEN}✓${NC} %-55s\n" "${message}"; log_file "OK    ${message}"
     else
         printf "\r  ${RED}✗${NC} %-55s ${RED}(exit ${rc})${NC}\n" "${message}"
         log_file "FAIL  ${message} (exit ${rc})"
     fi
-    return "${rc}"
+    return ${rc}
+}
+
+# Run a shell command string (supports pipes) with logging and spinner
+run_with_spinner_str() {
+    local label="$1"; shift
+    local cmd="$*"
+    if [ "${DRY_RUN}" = "1" ]; then
+        log_debug "DRY_RUN: would run (shell): ${cmd}"
+        return 0
+    fi
+    ( bash -lc "${cmd}" >> >(while IFS= read -r line; do log_file "$line"; done) 2>&1 ) &
+    spinner $! "${label}"
+    return $?
+}
+
+# Run a command array (safe exec form) with logging and spinner
+# Usage: run_with_spinner_arr "Label" -- cmd arg1 arg2 ...
+run_with_spinner_arr() {
+    local label="$1"; shift
+    if [ "$1" = "--" ]; then shift; fi
+    if [ "${DRY_RUN}" = "1" ]; then
+        # construct a readable representation for debugging
+        local cmdstr=""
+        local a
+        for a in "$@"; do
+            cmdstr+="${a} ";
+        done
+        log_debug "DRY_RUN: would run (exec): ${cmdstr}"
+        return 0
+    fi
+    ( "$@" >> >(while IFS= read -r line; do log_file "$line"; done) 2>&1 ) &
+    spinner $! "${label}"
+    return $?
+}
+
+# Run a command with retries using run_with_spinner_arr
+# Usage: run_with_retries_arr "Label" <max_attempts> <initial_backoff_seconds> -- cmd args...
+run_with_retries_arr() {
+    local label="$1"; local max_attempts="$2"; local backoff="$3"; shift 3
+    if [ "$1" = "--" ]; then shift; fi
+    if [ "${DRY_RUN}" = "1" ]; then
+        log_debug "DRY_RUN: would run (with retries): ${label}"
+        return 0
+    fi
+    local attempt=1 rc
+    while [ "${attempt}" -le "${max_attempts}" ]; do
+        log_debug "${label}: attempt ${attempt}/${max_attempts}"
+        if run_with_spinner_arr "${label} (attempt ${attempt}/${max_attempts})" -- "$@"; then
+            return 0
+        fi
+        rc=$?
+        log_debug "${label}: attempt ${attempt} failed (rc=${rc}), sleeping ${backoff}s"
+        attempt=$((attempt+1))
+        sleep "${backoff}"
+        backoff=$((backoff*2))
+    done
+    return 1
 }
 
 # ====== PACKAGE HELPERS ======
@@ -160,10 +222,8 @@ pkg_install() {
         return 0
     fi
 
-    (pkg install -y "${pkg}" >> >(while IFS= read -r line; do log_file "$line"; done) 2>&1) &
-    spinner $! "pkg: ${name}"
-    rc=$?
-    if [ "${rc}" -ne 0 ]; then
+    if ! run_with_spinner_arr "pkg: ${name}" -- pkg install -y "${pkg}"; then
+        local rc=$?
         fail_step "pkg install ${pkg} failed (exit ${rc})"
         return ${rc}
     fi
@@ -172,6 +232,7 @@ pkg_install() {
 pip_install() {
     local name="$1"; shift
     local env_vars=() packages=() past_sep=0
+    local arg
     for arg in "$@"; do
         if [ "${arg}" = "--" ]; then past_sep=1; continue; fi
         [ "${past_sep}" -eq 0 ] && env_vars+=("${arg}") || packages+=("${arg}")
@@ -179,7 +240,7 @@ pip_install() {
     [ "${#packages[@]}" -eq 0 ] && die "pip_install: no packages after '--' for '${name}'"
 
     local use_no_build_isolation=0
-    local tmp_env=()
+    local tmp_env=() ev
     for ev in "${env_vars[@]}"; do
         if printf '%s' "${ev}" | grep -q '^NO_BUILD_ISOLATION='; then
             if [ "${ev#*=}" = "1" ]; then use_no_build_isolation=1; fi
@@ -202,18 +263,17 @@ pip_install() {
     fi
 
     if [ "${#env_vars[@]}" -gt 0 ]; then
-        ( env "${env_vars[@]}" \
-            pip3 install ${build_flag} --no-cache-dir "${packages[@]}" \
-            >> >(while IFS= read -r line; do log_file "$line"; done) 2>&1 ) &
+        if ! run_with_spinner_arr "pip: ${name}" -- env "${env_vars[@]}" pip3 install ${build_flag} --no-cache-dir "${packages[@]}"; then
+            local rc=$?
+            fail_step "pip install ${name} failed (exit ${rc})"
+            return ${rc}
+        fi
     else
-        ( pip3 install ${build_flag} --no-cache-dir "${packages[@]}" \
-            >> >(while IFS= read -r line; do log_file "$line"; done) 2>&1 ) &
-    fi
-    spinner $! "pip: ${name}"
-    rc=$?
-    if [ "${rc}" -ne 0 ]; then
-        fail_step "pip install ${name} failed (exit ${rc})"
-        return ${rc}
+        if ! run_with_spinner_arr "pip: ${name}" -- pip3 install ${build_flag} --no-cache-dir "${packages[@]}"; then
+            local rc=$?
+            fail_step "pip install ${name} failed (exit ${rc})"
+            return ${rc}
+        fi
     fi
 }
 
@@ -221,6 +281,7 @@ install_pkg_list() {
     local group="$1"; shift
     log_file "Installing group: ${group} -> [${*}]"
     [ "${DRY_RUN}" = "1" ] && log_debug "DRY_RUN: would install group ${group}: ${*}" && return 0
+    local p
     for p in "$@"; do
         pkg_install "${p}"
     done
@@ -228,6 +289,7 @@ install_pkg_list() {
 
 _append_to_rcfiles() {
     local line="$1" marker="$2"
+    local rc
     for rc in "${HOME}/.bashrc" "${HOME}/.zshrc"; do
         grep -q "${marker}" "${rc}" 2>/dev/null && continue
         printf '\n# %s\n%s\n' "${marker}" "${line}" >> "${rc}"
@@ -258,6 +320,7 @@ install_config() {
 show_banner() {
     clear
     # Remove any previous run logs so only the latest execution remains
+    local f
     for f in "${LOG_FILE}" "${LOG_FILE}".* "${FAILED_FILE}"; do
         [ -f "${f}" ] && rm -f "${f}" 2>/dev/null || true
     done
@@ -316,7 +379,7 @@ setup_traps() {
 # Utility: run a numbered script and stream output to both console and log
 run_step_script() {
     local script="$1"
-    local name
+    local name rc
     name=$(basename "${script}")
     log_file "Running script: ${script}"
 
@@ -334,10 +397,10 @@ run_step_script() {
         rc=${PIPESTATUS[0]}
     else
         bash "${script}" 2>&1 | tee -a "${LOG_FILE}"
-        rc=${PIPESTATUS[0]:-${PIPESTATUS[0]}}
+        rc=${PIPESTATUS[0]:-1}
     fi
 
-    if [ ${rc} -ne 0 ]; then
+    if [ "${rc}" -ne 0 ]; then
         fail_step "script ${name} failed (exit ${rc})"
         echo -e "${RED}✗ ${name} failed (exit ${rc})${NC}"
     else
@@ -349,6 +412,7 @@ run_step_script() {
         while IFS= read -r line; do
             [ -z "${line}" ] && continue
             local found=0
+            local e
             for e in "${FAILED_STEPS[@]:-}"; do
                 if [ "${e}" = "${line}" ]; then found=1; break; fi
             done
@@ -360,5 +424,5 @@ run_step_script() {
     fi
 
     echo ""
-    return ${rc}
+    return "${rc}"
 }

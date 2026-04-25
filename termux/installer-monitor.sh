@@ -9,11 +9,17 @@ fi
 # Start installer in a detached tmux session
 # Use bash -lc inside tmux so the setup script runs in bash and respects the script's shells
 tmux new-session -d -s installer-run "bash -lc 'bash termux/setup.sh --verbose'"
-# Send Enter to accept the banner prompt
+# Give tmux a moment to create the session, then send Enter to accept the banner prompt
 sleep 0.5
-tmux send-keys -t installer-run Enter
+if tmux has-session -t installer-run 2>/dev/null; then
+  tmux send-keys -t installer-run Enter
+else
+  echo "Failed to start tmux session 'installer-run'"
+  exit 1
+fi
 
 log="termux/linux-desktop-install.log"
+# monitor defaults
 timeout=600
 interval=2
 elapsed=0
@@ -52,9 +58,9 @@ while true; do
 done
 
 # Print a final tail of the log
-echo "\nFINAL LOG TAIL (last 200 lines):"
+printf "\nFINAL LOG TAIL (last 200 lines):\n"
 if [ -f "${log}" ]; then
   tail -n 200 "${log}"
 else
-  echo "Log file not found: ${log}"
+  printf "Log file not found: %s\n" "${log}"
 fi

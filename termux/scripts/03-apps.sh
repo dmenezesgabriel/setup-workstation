@@ -2,6 +2,8 @@
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_SH="${RUN_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}/lib.sh"
+# shellcheck disable=SC1091
+# shellcheck source=../lib.sh
 source "${LIB_SH}"
 
 main() {
@@ -13,6 +15,7 @@ main() {
     install_pkg_list "Build toolchain" build-essential llvm lld rust cmake ninja pkg-config patchelf libandroid-execinfo
 
     # GOPATH and PATH
+    # shellcheck disable=SC2016
     _append_to_rcfiles 'export GOPATH="$HOME/go"; export PATH="$GOPATH/bin:$PATH"' 'LINUX_TERMINAL_GO_PATH'
 
     # Install configs from config/

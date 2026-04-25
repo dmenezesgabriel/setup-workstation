@@ -2,6 +2,8 @@
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_SH="${RUN_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}/lib.sh"
+# shellcheck disable=SC1091
+# shellcheck source=../lib.sh
 source "${LIB_SH}"
 
 main() {
@@ -27,6 +29,7 @@ main() {
     fi
 
     export PATH="${HOME}/.local/bin:${PATH}"
+    # shellcheck disable=SC2016
     _append_to_rcfiles 'export PATH="$HOME/.local/bin:$PATH"' 'LINUX_TERMINAL_UV_PATH'
 
     # Monitor uv-src if present (same behaviour as original script)
@@ -37,22 +40,26 @@ main() {
             chmod +x "${HOME}/.local/bin/uv" 2>/dev/null || true
             info "uv built and installed from ${RUN_DIR}/uv-src"
         else
-            if pgrep -f "cargo" >/dev/null 2>&1; then
-                (
-                    log_file "uv build monitor: started"
-                    while pgrep -f "cargo" >/dev/null 2>&1; do sleep 5; done
-                    if [ -f "${RUN_DIR}/uv-src/target/release/uv" ]; then
-                        mkdir -p "${HOME}/.local/bin" 2>/dev/null || true
-                        cp "${RUN_DIR}/uv-src/target/release/uv" "${HOME}/.local/bin/uv" 2>/dev/null || true
-                        chmod +x "${HOME}/.local/bin/uv" 2>/dev/null || true
-                        log_file "uv build monitor: built and installed ${HOME}/.local/bin/uv"
-                        info "uv build monitor: built and installed ${HOME}/.local/bin/uv"
-                    else
-                        log_file "uv build monitor: finished but binary not found"
-                        warn "uv build monitor: finished but binary not found"
-                    fi
-                ) &
-                info "Started background monitor for uv-source build"
+            if [ "${DRY_RUN}" = "1" ]; then
+                log_debug "DRY_RUN: would start uv-src background monitor"
+            else
+                if pgrep -f "cargo" >/dev/null 2>&1; then
+                    (
+                        log_file "uv build monitor: started"
+                        while pgrep -f "cargo" >/dev/null 2>&1; do sleep 5; done
+                        if [ -f "${RUN_DIR}/uv-src/target/release/uv" ]; then
+                            mkdir -p "${HOME}/.local/bin" 2>/dev/null || true
+                            cp "${RUN_DIR}/uv-src/target/release/uv" "${HOME}/.local/bin/uv" 2>/dev/null || true
+                            chmod +x "${HOME}/.local/bin/uv" 2>/dev/null || true
+                            log_file "uv build monitor: built and installed ${HOME}/.local/bin/uv"
+                            info "uv build monitor: built and installed ${HOME}/.local/bin/uv"
+                        else
+                            log_file "uv build monitor: finished but binary not found"
+                            warn "uv build monitor: finished but binary not found"
+                        fi
+                    ) &
+                    info "Started background monitor for uv-source build"
+                fi
             fi
         fi
     fi

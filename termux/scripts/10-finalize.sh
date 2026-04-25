@@ -2,6 +2,8 @@
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_SH="${RUN_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}/lib.sh"
+# shellcheck disable=SC1091
+# shellcheck source=../lib.sh
 source "${LIB_SH}"
 
 main() {
@@ -10,6 +12,7 @@ main() {
 
     # Optional GPU config
     if [ -f "${HOME}/.config/linux-desktop-gpu.sh" ]; then
+        # shellcheck disable=SC1091
         source "${HOME}/.config/linux-desktop-gpu.sh" 2>/dev/null || true
     fi
 

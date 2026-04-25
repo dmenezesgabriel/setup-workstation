@@ -2,20 +2,21 @@
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_SH="${RUN_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}/lib.sh"
+# shellcheck disable=SC1091
+# shellcheck source=../lib.sh
 source "${LIB_SH}"
 
 main() {
+    local rc
     echo -e "${PURPLE}Updating system packages...${NC}"
     echo ""
 
-    (pkg update -y >> >(while IFS= read -r line; do log_file "$line"; done) 2>&1) &
-    if ! spinner $! "Updating package lists..."; then
+    if ! run_with_spinner_arr "Updating package lists..." -- pkg update -y; then
         rc=$?
         fail_step "pkg update failed (exit ${rc})"
     fi
 
-    (pkg upgrade -y >> >(while IFS= read -r line; do log_file "$line"; done) 2>&1) &
-    if ! spinner $! "Upgrading installed packages..."; then
+    if ! run_with_spinner_arr "Upgrading installed packages..." -- pkg upgrade -y; then
         rc=$?
         fail_step "pkg upgrade failed (exit ${rc})"
     fi

@@ -2,6 +2,8 @@
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_SH="${RUN_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}/lib.sh"
+# shellcheck disable=SC1091
+# shellcheck source=../lib.sh
 source "${LIB_SH}"
 
 main() {
