@@ -10,7 +10,7 @@ main() {
     echo -e "${PURPLE}Installing core shell and development toolchain...${NC}"
     echo ""
 
-    install_pkg_list "Shell/Dev Tools" git curl wget tmux vim neovim fd ripgrep tree zsh openssh golang
+    install_pkg_list "Shell/Dev Tools" git curl wget tmux vim neovim fd ripgrep tree ncdu zsh openssh golang
 
     install_pkg_list "Build toolchain" build-essential llvm lld rust cmake ninja pkg-config patchelf libandroid-execinfo
 

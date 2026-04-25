@@ -13,7 +13,7 @@ main() {
     install_pkg_list "Data science: native libs" libopenblas fftw
 
     install_pkg_list "Data science: python pkgs (pkg)" \
-        python-numpy python-pandas python-scipy matplotlib python-polars python-pyarrow python-psutil
+        python-numpy python-pandas python-scipy matplotlib python-pyarrow python-psutil
 
     pip_install "Python build tools" -- \
         setuptools wheel packaging \
