@@ -4,6 +4,22 @@ set -uo pipefail
 # Orchestrator for modular linux-desktop installer
 RUN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export RUN_DIR
+
+# Compute TOTAL_STEPS dynamically from the scripts/ directory so newly added
+# step scripts (e.g. 09-code-server.sh) are automatically included in progress.
+script_count=0
+if [ -d "${RUN_DIR}/scripts" ]; then
+    for f in "${RUN_DIR}/scripts"/*.sh; do
+        [ -f "${f}" ] && script_count=$((script_count + 1))
+    done
+fi
+# Ensure a sane default if no scripts are found
+if [ "${script_count}" -le 0 ]; then
+    script_count=10
+fi
+TOTAL_STEPS="${script_count}"
+export TOTAL_STEPS
+
 # shellcheck source=lib.sh
 source "${RUN_DIR}/lib.sh"
 
