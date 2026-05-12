@@ -5,336 +5,230 @@ LIB_SH="${RUN_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}/lib.sh"
 # shellcheck disable=SC1091
 source "${LIB_SH}"
 
-# Simple installer / launcher for an OpenAI-compatible "llama.cpp router" using
-# llama-cpp-python and a small FastAPI app. The router lazily loads GGUF models
-# downloaded from Hugging Face and unloads them when idle to suit low-RAM
-# devices. Everything is configurable via environment variables and a models
-# manifest.
+# Replace the custom Python FastAPI "router.py" with integration to the
+# native llama.cpp HTTP server in router mode. The native server handles
+# on-demand model loading/unloading and exposes OpenAI-compatible endpoints
+# which OpenWebUI can connect to directly.
 
-# Configuration (can be set in the environment before running this script):
-#  ROUTER_VENV - path where the python venv will be created (default: $HOME/.local/openwebui-llamacpp-venv)
-#  ROUTER_DIR  - directory to store router code and models (default: $HOME/.local/openwebui-llamacpp)
-#  MODELS_DIR  - where GGUF model files will be stored (default: $ROUTER_DIR/models)
-#  ROUTER_PORT - HTTP port for the router (default: 8080)
-#  IDLE_UNLOAD_SECONDS - seconds of idle time before unloading a model (default: 120)
-#  MAX_LOADED_MODELS - maximum number of models to keep loaded concurrently (default: 1)
-#  HF_TOKEN - Hugging Face token (optional, needed for private models)
-
-ROUTER_VENV="${ROUTER_VENV:-${HOME}/.local/openwebui-llamacpp-venv}"
 ROUTER_DIR="${ROUTER_DIR:-${HOME}/.local/openwebui-llamacpp}"
 MODELS_DIR="${MODELS_DIR:-${ROUTER_DIR}/models}"
 ROUTER_PORT="${ROUTER_PORT:-8080}"
-IDLE_UNLOAD_SECONDS="${IDLE_UNLOAD_SECONDS:-120}"
-MAX_LOADED_MODELS="${MAX_LOADED_MODELS:-1}"
 HF_TOKEN="${HF_TOKEN:-}"
+LLAMA_DIR="${LLAMA_DIR:-${HOME}/src/llama.cpp}"
 
-PYTHON_BIN="${ROUTER_VENV}/bin/python"
-PIP_BIN="${ROUTER_VENV}/bin/pip"
-UVICORN_BIN="${ROUTER_VENV}/bin/uvicorn"
-
-info "Setting up OpenWebUI llama-cpp router"
-info "Router dir: ${ROUTER_DIR}"
-info "Models dir: ${MODELS_DIR}"
+info "Config: ROUTER_DIR=${ROUTER_DIR}, MODELS_DIR=${MODELS_DIR}, ROUTER_PORT=${ROUTER_PORT}, LLAMA_DIR=${LLAMA_DIR}"
 
 mkdir -p "${ROUTER_DIR}"
 mkdir -p "${MODELS_DIR}"
 
-# Create venv
-if [ ! -x "${PYTHON_BIN}" ]; then
-    info "Creating python venv at ${ROUTER_VENV}"
-    python3 -m venv "${ROUTER_VENV}"
+# Try to find a built llama.cpp 'server' binary in the expected build output
+find_server_bin() {
+    local d="${LLAMA_DIR}/build/bin"
+    if [ -d "${d}" ]; then
+        # prefer obvious server names
+        for n in server "llama-server" "llama.cpp-server" "llama-server"; do
+            if [ -x "${d}/${n}" ]; then
+                printf "%s\n" "${d}/${n}"
+                return 0
+            fi
+        done
+        # fallback: any executable with 'server' in the name
+        local f
+        f=$(find "${d}" -maxdepth 1 -type f -executable -iname "*server*" | head -n1 || true)
+        if [ -n "${f}" ]; then
+            printf "%s\n" "${f}"
+            return 0
+        fi
+    fi
+    return 1
+}
+
+SERVER_BIN=""
+if [ -d "${LLAMA_DIR}" ]; then
+    SERVER_BIN=$(find_server_bin || true)
 fi
 
-info "Upgrading pip and installing Python dependencies"
-"${PIP_BIN}" install --upgrade pip
-# Pin simple, tested versions for reproducibility. Adjust as needed.
-"${PIP_BIN}" install fastapi==0.100.0 uvicorn==0.22.0 huggingface-hub==0.16.4 llama-cpp-python==0.1.51
+# If server binary not present, try to build a server target (with minimal parallelism)
+if [ -z "${SERVER_BIN}" ]; then
+    warn "llama.cpp server binary not found in ${LLAMA_DIR}; attempting to build the server target (may need additional RAM/CPU)"
+    if [ ! -d "${LLAMA_DIR}" ]; then
+        fail_step "llama.cpp repo not found at ${LLAMA_DIR}; please run scripts/12-llamacpp.sh to clone/build llama.cpp"
+        exit 1
+    fi
 
-# Write the router app
-ROUTER_PY="${ROUTER_DIR}/router.py"
-cat > "${ROUTER_PY}" <<'PY'
-#!/usr/bin/env python3
-"""
-A lightweight OpenAI-compatible router that uses llama-cpp-python to load GGUF
-models on-demand. It exposes a minimal OpenAI Chat Completions endpoint so you
-can point OpenWebUI (or any OpenAI-compatible client) at it.
+    cd "${LLAMA_DIR}"
+    # Clean previous build to force server target configuration
+    rm -rf build || true
 
-Features:
-- Download models from Hugging Face via the /models/add endpoint.
-- Lazily load models into memory when requested.
-- Enforce a max number of concurrently loaded models and unload least recently
-  used models when needed.
-- Unload idle models after a configurable timeout.
+    # Configure CMake to include the server target; use Ninja and limit to 1 job to be conservative
+    info "Configuring cmake to build server (this may take a while)"
+    cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLAMA_BUILD_SERVER=ON -DLLAMA_BUILD_TOOLS=ON -DGGML_OPENMP=OFF -DBUILD_SHARED_LIBS=OFF || {
+        fail_step "cmake configure for server failed"
+        exit 1
+    }
 
-Simple usage:
-  POST /models/add {"repo_id": "LiquidAI/LFM2.5-350M-GGUF"}
-  POST /v1/chat/completions (OpenAI-compatible payload)
+    info "Building server target (jobs=1)"
+    cmake --build build --target server -- -j 1 || cmake --build build --target llama-server -- -j 1 || cmake --build build -- -j 1
 
-This is intentionally small and dependency-light to work on constrained devices.
-"""
-import os
-import time
-import threading
-import json
-from typing import Dict, Any
-from collections import OrderedDict
-from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel
-from huggingface_hub import hf_hub_download, HfApi
+    SERVER_BIN=$(find_server_bin || true)
+fi
 
-# Optional: provide HF token via environment
-HF_TOKEN = os.environ.get("HF_TOKEN")
-MODELS_DIR = os.environ.get("MODELS_DIR", os.path.expanduser("~/.local/openwebui-llamacpp/models"))
-IDLE_UNLOAD_SECONDS = int(os.environ.get("IDLE_UNLOAD_SECONDS", "120"))
-MAX_LOADED_MODELS = int(os.environ.get("MAX_LOADED_MODELS", "1"))
+if [ -z "${SERVER_BIN}" ]; then
+    fail_step "Could not find or build a llama.cpp server binary in ${LLAMA_DIR}/build/bin. Aborting."
+    exit 1
+fi
 
-os.makedirs(MODELS_DIR, exist_ok=True)
+info "Found llama.cpp server binary: ${SERVER_BIN}"
 
-app = FastAPI()
-api = HfApi()
+# Inspect the server help to determine available flags
+HELP_OUT="$(${SERVER_BIN} --help 2>&1 || true)"
 
-# Model manifest keeps metadata about downloaded models.
-MANIFEST_PATH = os.path.join(MODELS_DIR, "models.json")
-if os.path.exists(MANIFEST_PATH):
-    with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
-        MANIFEST = json.load(f)
-else:
-    MANIFEST = {}
+action_has_flag() {
+    local flag="$1"
+    printf "%s" "${HELP_OUT}" | grep -q -- "${flag}"
+}
 
-# In-memory loaded model objects (LRU)
-# key -> {"llm": Llama instance, "last_used": timestamp, "timer": Timer}
-LOADED: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
-lock = threading.Lock()
+# Determine router flag availability and models-dir flag
+if action_has_flag --router; then
+    ROUTER_FLAG="--router"
+else
+    ROUTER_FLAG=""  # older/newer builds may not require an explicit --router flag
+fi
 
-# Try to import llama-cpp-python lazily; if unavailable we will error on usage.
-try:
-    from llama_cpp import Llama
-except Exception as e:
-    Llama = None
+# models-dir flag name
+if action_has_flag --models-dir; then
+    MODELSDIR_FLAG="--models-dir"
+elif action_has_flag --model-dir; then
+    MODELSDIR_FLAG="--model-dir"
+else
+    MODELSDIR_FLAG="--models-dir" # default to --models-dir
+fi
 
-class AddModelReq(BaseModel):
-    repo_id: str
-    filename: str = "model.gguf"
-    revision: str | None = None
+# Determine how to pass host/port
+if action_has_flag --http-port; then
+    HOST_FLAG="--http-host"
+    PORT_FLAG="--http-port"
+elif action_has_flag --http; then
+    # server supports --http <host:port>
+    HOST_FLAG="--http"
+    PORT_FLAG=""  # will be passed as single arg
+elif action_has_flag --host && action_has_flag --port; then
+    HOST_FLAG="--host"
+    PORT_FLAG="--port"
+else
+    # fallback to --http if present, else default to --host/--port
+    if action_has_flag --http; then
+        HOST_FLAG="--http"
+        PORT_FLAG=""
+    else
+        HOST_FLAG="--host"
+        PORT_FLAG="--port"
+    fi
+fi
 
-class OpenAIMessage(BaseModel):
-    role: str
-    content: str
-
-class OpenAIChatReq(BaseModel):
-    model: str
-    messages: list[OpenAIMessage]
-    max_tokens: int | None = 128
-
-
-def save_manifest():
-    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
-        json.dump(MANIFEST, f, indent=2)
-
-
-def ensure_not_native_missing():
-    if Llama is None:
-        raise RuntimeError("llama-cpp-python is not available in the environment; ensure the venv has it installed.")
-
-
-def download_model(repo_id: str, filename: str = "model.gguf", revision: str | None = None) -> str:
-    """Download a file from a HF repo into MODELS_DIR and record it in manifest.
-    Returns the local path.
-    """
-    token = os.environ.get("HF_TOKEN")
-    try:
-        local_path = hf_hub_download(repo_id=repo_id, filename=filename, revision=revision, cache_dir=MODELS_DIR, token=token)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to download model: {e}")
-    # hf_hub_download may return a path inside cache_dir; we copy it to MODELS_DIR root for clarity
-    base_name = os.path.basename(local_path)
-    dest = os.path.join(MODELS_DIR, base_name)
-    if os.path.abspath(local_path) != os.path.abspath(dest):
-        try:
-            import shutil
-            shutil.copy2(local_path, dest)
-        except Exception:
-            # fallback: keep original path
-            dest = local_path
-    MANIFEST[repo_id + "/" + filename] = {"repo_id": repo_id, "filename": filename, "local_path": dest, "revision": revision}
-    save_manifest()
-    return dest
-
-
-def load_model(model_key: str):
-    """Load a manifest model into memory (Llama instance). Model_key is repo_id/filename or a manifest key.
-    Uses LRU eviction to ensure we don't keep more than MAX_LOADED_MODELS loaded.
-    """
-    ensure_not_native_missing()
-    with lock:
-        # normalize key
-        key = model_key
-        if key not in MANIFEST:
-            raise HTTPException(status_code=404, detail="Model not found in manifest; add it via /models/add")
-        meta = MANIFEST[key]
-        path = meta.get("local_path")
-
-        # If already loaded, update recency and return
-        if key in LOADED:
-            LOADED.move_to_end(key)
-            LOADED[key]["last_used"] = time.time()
-            # cancel any pending unload timer and set a fresh one
-            timer = LOADED[key].get("timer")
-            if timer:
-                timer.cancel()
-            LOADED[key]["timer"] = threading.Timer(IDLE_UNLOAD_SECONDS, lambda: unload_model(key))
-            LOADED[key]["timer"].daemon = True
-            LOADED[key]["timer"].start()
-            return LOADED[key]["llm"]
-
-        # Evict if necessary
-        while len(LOADED) >= MAX_LOADED_MODELS and len(LOADED) > 0:
-            # pop the oldest
-            old_key, _ = LOADED.popitem(last=False)
-            try:
-                unload_model(old_key)
-            except Exception:
-                pass
-
-        # Create the Llama instance
-        try:
-            llm = Llama(model_path=path)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to load model: {e}")
-
-        LOADED[key] = {"llm": llm, "last_used": time.time(), "timer": None}
-        LOADED.move_to_end(key)
-        LOADED[key]["timer"] = threading.Timer(IDLE_UNLOAD_SECONDS, lambda: unload_model(key))
-        LOADED[key]["timer"].daemon = True
-        LOADED[key]["timer"].start()
-        return llm
-
-
-def unload_model(key: str):
-    """Unload a model from memory and free resources."""
-    with lock:
-        entry = LOADED.pop(key, None)
-    if not entry:
-        return
-    try:
-        timer = entry.get("timer")
-        if timer:
-            timer.cancel()
-    except Exception:
-        pass
-    try:
-        # llama-cpp-python exposes a close method
-        entry["llm"].close()
-    except Exception:
-        pass
-
-
-@app.post("/models/add")
-def add_model(req: AddModelReq):
-    repo = req.repo_id
-    fn = req.filename
-    rev = req.revision
-    path = download_model(repo, fn, rev)
-    return {"status": "ok", "local_path": path, "manifest_key": repo + "/" + fn}
-
-
-@app.get("/models/list")
-def list_models():
-    return {"models": MANIFEST}
-
-
-@app.post("/v1/chat/completions")
-def chat_completions(req: OpenAIChatReq):
-    # Use last message content as prompt (simple mapping)
-    if not req.messages:
-        raise HTTPException(status_code=400, detail="messages is required")
-    prompt = req.messages[-1].content
-    model_key = req.model
-    llm = load_model(model_key)
-    try:
-        # llama-cpp-python create completion
-        resp = llm.create_completion(prompt=prompt, max_tokens=req.max_tokens or 128)
-        # response contains choices which include text
-        text = resp.get("choices", [{}])[0].get("text", "")
-        return {"id": "llamacpp-router-1", "object": "text_completion", "choices": [{"text": text}], "model": model_key}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
-
-
-@app.post("/v1/models/reload")
-def reload_models():
-    # Useful for debugging: unload everything
-    keys = list(LOADED.keys())
-    for k in keys:
-        unload_model(k)
-    return {"status": "ok"}
-
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("ROUTER_PORT", "8080"))
-    uvicorn.run("router:app", host="127.0.0.1", port=port, log_level="info")
-PY
-
-chmod +x "${ROUTER_PY}"
-
-# Create a small launcher script
-LAUNCH_SH="${ROUTER_DIR}/run-router.sh"
+# Create a launcher script
+LAUNCH_SH="${ROUTER_DIR}/run-llama-server.sh"
 cat > "${LAUNCH_SH}" <<EOF
 #!/data/data/com.termux/files/usr/bin/bash
 set -euo pipefail
-export MODELS_DIR="${MODELS_DIR}"
-export HF_TOKEN="${HF_TOKEN}"
-export IDLE_UNLOAD_SECONDS="${IDLE_UNLOAD_SECONDS}"
-export MAX_LOADED_MODELS="${MAX_LOADED_MODELS}"
-export ROUTER_PORT="${ROUTER_PORT}"
-"${UVICORN_BIN}" router:app --host 127.0.0.1 --port ${ROUTER_PORT} --reload
+MODELS_DIR="${MODELS_DIR}"
+ROUTER_PORT="${ROUTER_PORT}"
+SERVER_BIN="${SERVER_BIN}"
+HF_TOKEN="${HF_TOKEN}"
+
+# Start llama.cpp server in router mode, with the models directory
 EOF
+
+# Build the actual invocation depending on flags
+if [ -n "${HOST_FLAG}" ] && [ -n "${PORT_FLAG}" ]; then
+    cat >> "${LAUNCH_SH}" <<EOF
+exec "${SERVER_BIN}" ${ROUTER_FLAG} ${HOST_FLAG} 127.0.0.1 ${PORT_FLAG} ${ROUTER_PORT} ${MODELSDIR_FLAG} "${MODELS_DIR}" --hf-token "${HF_TOKEN}"
+EOF
+elif [ "${HOST_FLAG}" = "--http" ]; then
+    cat >> "${LAUNCH_SH}" <<EOF
+exec "${SERVER_BIN}" ${ROUTER_FLAG} --http 127.0.0.1:${ROUTER_PORT} ${MODELSDIR_FLAG} "${MODELS_DIR}" --hf-token "${HF_TOKEN}"
+EOF
+else
+    # No explicit host/port flags detected; just run router with model-dir and hope server defaults to reasonable HTTP interface
+    cat >> "${LAUNCH_SH}" <<EOF
+exec "${SERVER_BIN}" ${ROUTER_FLAG} ${MODELSDIR_FLAG} "${MODELS_DIR}" --hf-token "${HF_TOKEN}" --port ${ROUTER_PORT}
+EOF
+fi
+
 chmod +x "${LAUNCH_SH}"
 
-info "Downloading test model LiquidAI/LFM2.5-350M-GGUF into models dir (this may take a while)"
-# Use the installed python to call a small helper to download reproducibly
-"${PYTHON_BIN}" - <<PYCODE
-from huggingface_hub import hf_hub_download
-import os, json
-models_dir = os.environ.get('MODELS_DIR', '${MODELS_DIR}')
-repo='LiquidAI/LFM2.5-350M-GGUF'
-fn='LFM2.5-350M.gguf'
-# Some repos use different filenames; attempt common ones
-candidates = ['model.gguf', 'LFM2.5-350M.gguf', 'LFM2.5-350M-GGUF.gguf']
-for f in candidates:
-    try:
-        p = hf_hub_download(repo_id=repo, filename=f, cache_dir=models_dir, token=os.environ.get('HF_TOKEN'))
-        # copy into models_dir root
-        import shutil
-        dest = os.path.join(models_dir, os.path.basename(p))
-        if os.path.abspath(p) != os.path.abspath(dest):
-            shutil.copy2(p, dest)
-        manifest_path = os.path.join(models_dir, 'models.json')
-        key = repo + '/' + f
-        manifest = {}
-        if os.path.exists(manifest_path):
-            manifest = json.load(open(manifest_path,'r'))
-        manifest[key] = {'repo_id': repo, 'filename': f, 'local_path': dest}
-        json.dump(manifest, open(manifest_path, 'w'), indent=2)
-        print('downloaded', dest)
-        break
-    except Exception as e:
-        # try next candidate
-        last = e
-else:
-    print('WARNING: did not find expected file in repo; please run the /models/add endpoint with exact filename')
-PYCODE
+info "Created server launcher: ${LAUNCH_SH}"
 
-info "Install complete. To run the router:"
+echo "To start the llama.cpp server in router mode, run:"
 echo "  ${LAUNCH_SH}"
 echo "Then point OpenWebUI to http://127.0.0.1:${ROUTER_PORT} as an OpenAI-compatible provider."
 
-echo "Example: add the test model using the router's endpoint (if not auto-downloaded):"
-echo "  curl -X POST http://127.0.0.1:${ROUTER_PORT}/models/add -H 'Content-Type: application/json' -d '{\"repo_id\": \"LiquidAI/LFM2.5-350M-GGUF\", \"filename\": \"model.gguf\"}'"
+# Try to start the server in background for a quick sanity check
+LOG="${ROUTER_DIR}/llama-server.log"
+info "Starting server (background) for sanity check; logs -> ${LOG}"
+nohup "${LAUNCH_SH}" >"${LOG}" 2>&1 &
+# Give it a few seconds to start
+sleep 3
 
-echo "Example OpenAI-compatible request to generate:"
-echo "  curl -s -X POST http://127.0.0.1:${ROUTER_PORT}/v1/chat/completions -H 'Content-Type: application/json' -d '{\"model\": \"LiquidAI/LFM2.5-350M-GGUF/model.gguf\", \"messages\": [{\"role\": \"user\", \"content\": \"Say hello\"}] }'"
+# Wait for an HTTP response on the port
+ready=0
+for i in {1..10}; do
+    # Try a few endpoints the server commonly exposes
+    if curl -sS "http://127.0.0.1:${ROUTER_PORT}/v1/models" >/dev/null 2>&1 || curl -sS "http://127.0.0.1:${ROUTER_PORT}/models" >/dev/null 2>&1 || curl -sS "http://127.0.0.1:${ROUTER_PORT}/v1" >/dev/null 2>&1; then
+        ready=1
+        break
+    fi
+    sleep 1
+done
+
+if [ "${ready}" -eq 1 ]; then
+    info "llama.cpp server appears to be responding on port ${ROUTER_PORT}"
+    echo "Point OpenWebUI to http://127.0.0.1:${ROUTER_PORT}"
+
+    # Try to detect a default model and emit an OpenWebUI provider file for reproducibility
+    MODELS_JSON="$(curl -sS "http://127.0.0.1:${ROUTER_PORT}/v1/models" || true)"
+    if [ -n "${MODELS_JSON}" ]; then
+        # attempt to extract a model id using jq if available, else simple parse
+        if command -v jq >/dev/null 2>&1; then
+            MODEL_ID=$(printf "%s" "${MODELS_JSON}" | jq -r '.data[0].id // .data[0].name // .data[0].model // empty') || true
+        else
+            MODEL_ID=$(printf "%s" "${MODELS_JSON}" | sed -n 's/.*"id":\s*"\([^"]\+\)".*/\1/p' | head -n1 || true)
+        fi
+        if [ -n "${MODEL_ID}" ]; then
+            PROVIDER_FILE="${ROUTER_DIR}/openwebui-provider.json"
+            cat > "${PROVIDER_FILE}" <<EOF
+{
+  "name": "Local LlamaCPP",
+  "type": "llama_cpp",
+  "url": "http://127.0.0.1:${ROUTER_PORT}",
+  "model": "${MODEL_ID}"
+}
+EOF
+            info "Wrote OpenWebUI provider hint: ${PROVIDER_FILE} (contains detected model id)"
+        else
+            info "No model id detected from server probe; please place a GGUF model in ${MODELS_DIR} or add via server API"
+        fi
+    fi
+
+else
+    warn "Server did not respond to probe on port ${ROUTER_PORT} within the timeout. Check logs: ${LOG}"
+    tail -n 50 "${LOG}" || true
+fi
+
+# Ensure an idempotent zsh alias exists for starting the server (alias only)
+ZSHRC="$HOME/.zshrc"
+ALIAS_LINE="alias owui=\"${HOME}/.local/bin/start-llama-openwebui.sh\""
+if [ -f "${ZSHRC}" ]; then
+    if ! grep -Fq "${ALIAS_LINE}" "${ZSHRC}"; then
+        printf "\n# OpenWebUI helper alias (created by scripts/13-openwebui-llamacpp.sh)\n%s\n" "${ALIAS_LINE}" >> "${ZSHRC}"
+        info "Added alias to ${ZSHRC}: owui"
+    else
+        info "Alias already present in ${ZSHRC}"
+    fi
+else
+    printf "%s\n" "${ALIAS_LINE}" > "${ZSHRC}"
+    info "Created ${ZSHRC} with owui alias"
+fi
 
 info "Script finished."
 
