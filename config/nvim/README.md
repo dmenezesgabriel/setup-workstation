@@ -8,11 +8,18 @@ nvim -u init.lua init.lua
 
 ### Explore
 
-Files explorer
+Sidebar file explorer
 
-- `:Explore` or `:e .`: open file explore
-- `%`: when on `:Explore`, creates a new file
-- `:find`: when on `:Explore` search a file
+- `<leader>e`: toggle the sidebar explorer
+- `:SidebarToggle`: toggle the sidebar explorer
+- `<CR>` or `l`: expand a directory or open a file
+- `h`: collapse an expanded directory or move to the parent entry
+- `r`: refresh the sidebar tree and recalculate git-ignored styling
+- `q`: close the sidebar
+
+The explorer opens from the project root when a root marker is found, otherwise from the current working directory.
+Directories use `▸` and `▾` markers so the tree stays readable without plugins.
+Git-ignored files and directories are shown with a muted gray highlight when the current root is inside a git repository.
 
 ### Functioning
 

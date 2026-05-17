@@ -184,6 +184,19 @@ local function find_root(patterns)
   return root and vim.fn.fnamemodify(root, ':h') or path
 end
 
+-- sidebar explorer
+local config_dir = vim.fn.fnamemodify(vim.env.MYVIMRC, ":p:h")
+package.path = table.concat(
+    {
+        config_dir .. "/lua/?.lua",
+        config_dir .. "/lua/?/init.lua",
+        package.path,
+    },
+    ";"
+)
+
+require("sidebar_explorer").setup()
+
 -- ===========================================================================
 -- Language options
 -- ===========================================================================
