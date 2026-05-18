@@ -106,6 +106,32 @@ assert_equal(vim.tbl_count(fallback_lookup), 0, "non-git directories should retu
 assert_equal(#notifications, 0, "non-git fallback should not notify")
 vim.notify = original_notify
 
+-- IT-002: build_lines reflects new files and updated ignore state after filesystem changes
+local new_tracked = temp_root .. "/newly_added.txt"
+vim.fn.writefile({ "new content" }, new_tracked)
+local after_add_lines, after_add_entries = explorer._test.build_lines(temp_root, { [normalized_root] = true })
+assert_truthy(has_line_suffix(after_add_lines, "newly_added.txt"), "build_lines should include files added after the initial render")
+
+vim.fn.writefile({ "ignored.txt", "ignored-dir/", "newly_added.txt" }, temp_root .. "/.gitignore")
+local after_ignore_lines, after_ignore_entries = explorer._test.build_lines(temp_root, { [normalized_root] = true })
+local newly_ignored_entry = find_entry(after_ignore_entries, "newly_added.txt")
+assert_truthy(newly_ignored_entry and newly_ignored_entry.ignored, "build_lines should recalculate ignored state when gitignore is updated")
+
+-- OT-001: git detection failure emits at most one notification per call
+local corrupted_git_root = vim.fn.tempname()
+vim.fn.mkdir(corrupted_git_root .. "/.git", "p")
+local ot_001_notifications = {}
+local ot_001_original_notify = vim.notify
+vim.notify = function(message, level)
+    table.insert(ot_001_notifications, { message = message, level = level })
+end
+explorer._test.get_ignored_lookup(corrupted_git_root, {
+    explorer._test.normalize_path(corrupted_git_root .. "/file.txt"),
+})
+vim.notify = ot_001_original_notify
+assert_truthy(#ot_001_notifications <= 1, "git detection failure should emit at most one notification")
+vim.fn.delete(corrupted_git_root, "rf")
+
 vim.cmd("bwipeout!")
 vim.fn.delete(fallback_root, "rf")
 vim.fn.delete(temp_root, "rf")

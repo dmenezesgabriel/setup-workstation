@@ -1,5 +1,21 @@
 # Nvim
 
+## Install
+
+**From this repo** (run from repo root):
+
+```sh
+rsync -a --delete config/nvim/ ~/.config/nvim/
+```
+
+**Without cloning** (one-liner):
+
+```sh
+git clone --depth 1 --filter=blob:none --sparse https://github.com/dmenezesgabriel/setup-workstation /tmp/nvim-setup && git -C /tmp/nvim-setup sparse-checkout set config/nvim && rsync -a /tmp/nvim-setup/config/nvim/ ~/.config/nvim/ && rm -rf /tmp/nvim-setup
+```
+
+---
+
 ```sh
 nvim -u init.lua init.lua
 ```
