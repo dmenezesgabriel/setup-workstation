@@ -12,6 +12,12 @@ This file defines the domain vocabulary for this project. Both plan-it and imple
 **Usage**: `sidebar_explorer` module, `state.winid` / `state.bufnr`, `SidebarToggle` command.
 **Constraints**: Only one sidebar window per tab. Width is fixed at `config.width` (default 32).
 
+### Explorer Module
+
+**Definition**: The pure data-layer module (`config/nvim/lua/explorer/init.lua`) that owns all file-tree and filesystem logic: directory scanning, git-ignore lookup, project-root resolution, and raw entry collection. It has no window, buffer, or UI dependencies.
+**Usage**: `require("explorer")`, `explorer.build_entries(root, expanded)`, `explorer.resolve_root()`, `explorer.get_ignored_lookup(root, paths)`.
+**Constraints**: Must not import `ui/file_status_renderer`, `ui/gutter_renderer`, or `config`. Display formatting (icons, status symbols) is the responsibility of `sidebar_explorer`, not `explorer`.
+
 ### Provider Contract
 
 **Definition**: The Lua table shape and function signatures that any git status provider must satisfy, defined in `core/status_provider.lua`.
