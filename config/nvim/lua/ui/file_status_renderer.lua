@@ -32,11 +32,15 @@ function M.get_indicator(entry)
     return { symbol = "", highlight = nil }
 end
 
-function M.refresh(root)
+function M.refresh(root, on_done)
     if timer then timer:stop(); timer:close(); timer = nil end
-    timer = vim.uv.new_timer()
-    timer:start(cfg.debounce_ms, 0, vim.schedule_wrap(function()
+    local t = vim.uv.new_timer()
+    timer = t
+    t:start(cfg.debounce_ms, 0, vim.schedule_wrap(function()
+        if timer ~= t then return end
+        timer = nil
         cached_status = git_status.get(root) or {}
+        if on_done then on_done() end
     end))
 end
 

@@ -76,7 +76,7 @@ function M.get(path, staged)
         return {}
     end
 
-    return M._parse(stdout, path, staged)
+    return M._parse(stdout, vim.fs.normalize(path), staged)
 end
 
 return M

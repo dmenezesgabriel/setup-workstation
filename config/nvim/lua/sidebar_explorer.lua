@@ -385,7 +385,7 @@ local function render()
     apply_highlights(bufnr, line_entries)
     vim.bo[bufnr].modifiable = false
 
-    if #lines > 0 then
+    if #lines > 0 and state.winid and vim.api.nvim_win_is_valid(state.winid) then
         local line = vim.api.nvim_win_get_cursor(state.winid)[1]
         line = math.max(1, math.min(line, #lines))
         vim.api.nvim_win_set_cursor(state.winid, { line, 0 })
@@ -423,7 +423,6 @@ function M.refresh()
     end
 
     render()
-    file_status_renderer.refresh(state.root)
 end
 
 function M.toggle()
@@ -515,6 +514,8 @@ end
 function M.setup(options)
     config = vim.tbl_deep_extend("force", config, options or {})
 
+    local sidebar_augroup = vim.api.nvim_create_augroup("SidebarExplorer", { clear = true })
+
     vim.api.nvim_set_hl(0, config.ignored_highlight, {
         fg = "#6c6c6c",
         ctermfg = 242,
@@ -532,11 +533,15 @@ function M.setup(options)
     vim.api.nvim_set_hl(0, cfg.highlights.partial,   { fg = "#e5c07b" })
 
     vim.api.nvim_create_autocmd("BufWritePost", {
+        group = sidebar_augroup,
         callback = function(ev)
             local buf_path = vim.api.nvim_buf_get_name(ev.buf)
             if buf_path ~= "" and state.root and vim.startswith(buf_path, state.root) then
-                file_status_renderer.refresh(state.root)
-                M.refresh()
+                file_status_renderer.refresh(state.root, function()
+                    if state.winid and vim.api.nvim_win_is_valid(state.winid) then
+                        render()
+                    end
+                end)
             end
         end,
     })
