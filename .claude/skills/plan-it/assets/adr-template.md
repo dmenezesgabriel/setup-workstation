@@ -10,7 +10,7 @@
 
 ## Related Tasks
 
-- `issues/001-example-task.md`
+- `tasks/issues/001-example-task.md`
 
 ## Context
 

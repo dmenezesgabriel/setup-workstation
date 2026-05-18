@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Invoked by plan-it before writing issue files to `issues/`.
+# Invoked by plan-it before writing issue files to `tasks/issues/`.
 # Exit codes: 0 (directory ready), non-zero on permission error (set -e propagates).
 # Output: prints "ready: <DIR>" on success.
 set -euo pipefail
@@ -11,11 +11,11 @@ Usage: scripts/ensure-issues-dir.sh [DIR]
 Ensure an issues directory exists.
 
 Arguments:
-  DIR   Directory to create. Defaults to: issues
+  DIR   Directory to create. Defaults to: tasks/issues
 
 Examples:
   scripts/ensure-issues-dir.sh
-  scripts/ensure-issues-dir.sh issues
+  scripts/ensure-issues-dir.sh tasks/issues
 EOF
 }
 
@@ -24,7 +24,7 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   exit 0
 fi
 
-ISSUES_DIR="${1:-issues}"
+ISSUES_DIR="${1:-tasks/issues}"
 
 mkdir -p "$ISSUES_DIR"
 echo "ready: $ISSUES_DIR"

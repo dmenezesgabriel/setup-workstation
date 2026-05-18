@@ -16,15 +16,15 @@ Print the next available issue number and reserve it in the lock file.
 
 Arguments:
   LOCK_FILE    Path to the JSON counter file. Default: issues-lock.json
-  ISSUES_DIR   Active issues directory.  Default: issues
-  ARCHIVE_DIR  Archived issues directory. Default: issues/_archive
+  ISSUES_DIR   Active issues directory.  Default: tasks/issues
+  ARCHIVE_DIR  Archived issues directory. Default: tasks/issues/_archive
 
 Output:
   A single zero-padded 3-digit number, e.g. "004"
 
 Examples:
   NUM=$(bash scripts/next-issue-number.sh)
-  bash scripts/next-issue-number.sh issues-lock.json issues issues/_archive
+  bash scripts/next-issue-number.sh issues-lock.json tasks/issues tasks/issues/_archive
 EOF
 }
 
@@ -34,8 +34,8 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
 fi
 
 LOCK_FILE="${1:-issues-lock.json}"
-ISSUES_DIR="${2:-issues}"
-ARCHIVE_DIR="${3:-issues/_archive}"
+ISSUES_DIR="${2:-tasks/issues}"
+ARCHIVE_DIR="${3:-tasks/issues/_archive}"
 
 if [[ -f "$LOCK_FILE" ]]; then
   next_id=$(jq '.next_id' "$LOCK_FILE")

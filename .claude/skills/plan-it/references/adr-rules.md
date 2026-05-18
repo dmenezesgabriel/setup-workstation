@@ -98,6 +98,19 @@ Bad:
 - Hide the decision inside background text.
 - Skip consequences.
 
+## ADR diagram rule
+
+An ADR stub may include one Mermaid diagram in the Options Considered section when options have topological differences, distinct data flows, or different system boundaries. Include a diagram only when the options cannot be compared clearly in ≤3 bullet points per option. See [diagram-rules.md](diagram-rules.md) for type selection (prefer `flowchart` for topology comparisons, `sequenceDiagram` for message-flow comparisons) and formatting.
+
+Good:
+- Three notification delivery options (inline, queue, webhook) compared with a single `flowchart` showing the path from trigger to delivery in each option.
+- Two storage strategies (relational vs. document) compared with an `erDiagram` per option showing schema shape.
+
+Bad:
+- A diagram for every ADR regardless of option complexity.
+- A separate diagram per option instead of one comparative diagram.
+- A diagram that repeats what the prose already says in two bullets.
+
 ## ADR and task relationship
 
 Tasks should not silently depend on unrecorded architecture decisions.

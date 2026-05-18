@@ -50,6 +50,8 @@ Example:
 - A project has a name, optional description, owner, member list, and settings page.
 - Only the project owner can invite members or change project settings.
 
+<!-- Optional: include a Mermaid diagram here if the diagram merit rule is satisfied — see references/diagram-rules.md. Include only when ≥3 components interact or the flow cannot be expressed in ≤3 bullet points. -->
+
 ## Use Cases
 
 Use Gherkin. Highlight reserved words in bold.

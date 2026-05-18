@@ -56,24 +56,24 @@ Do not use implement-it when:
 
 ## Output requirement
 
-When implementation changes are complete, create or update an implementation summary in `implementation/`.
+When implementation changes are complete, create or update an implementation summary in `tasks/implementation/`.
 
 Before writing implementation output, run:
 
 ```bash
-mkdir -p implementation
+mkdir -p tasks/implementation
 ```
 
 Use this naming format:
 
 ```text
-implementation/001-create-project-summary.md
-implementation/002-invite-project-member-summary.md
+tasks/implementation/001-create-project-summary.md
+tasks/implementation/002-invite-project-member-summary.md
 ```
 
 ## Before marking complete
 
-- [ ] Implementation summary created in `implementation/` using the template structure
+- [ ] Implementation summary created in `tasks/implementation/` using the template structure
 - [ ] All required tests added or updated and passing
 - [ ] Lint, typecheck, and build pass (or pre-existing failures documented)
 - [ ] Accessibility checks completed if any UI was touched

@@ -1,13 +1,13 @@
 # Output Rules
 
-After implementation, write a short implementation summary in `implementation/`.
+After implementation, write a short implementation summary in `tasks/implementation/`.
 
 ## Directory rule
 
 Before writing implementation output, ensure the directory exists:
 
 ```bash
-mkdir -p implementation
+mkdir -p tasks/implementation
 ```
 
 ## File rules
@@ -26,19 +26,19 @@ mkdir -p implementation
 ## File naming format
 
 ```text
-implementation/001-short-descriptive-slug-summary.md
+tasks/implementation/001-short-descriptive-slug-summary.md
 ```
 
 Good:
-- `implementation/001-create-project-summary.md`
-- `implementation/002-invite-project-member-summary.md`
-- `implementation/003-protect-project-settings-summary.md`
+- `tasks/implementation/001-create-project-summary.md`
+- `tasks/implementation/002-invite-project-member-summary.md`
+- `tasks/implementation/003-protect-project-settings-summary.md`
 
 Bad:
-- `implementation/done.md`
-- `implementation/task1.md`
-- `implementation/summary final.md`
-- `implementation/001.md`
+- `tasks/implementation/done.md`
+- `tasks/implementation/task1.md`
+- `tasks/implementation/summary final.md`
+- `tasks/implementation/001.md`
 
 ## Summary content
 

@@ -1,6 +1,7 @@
 local M = {}
 
 local uv = vim.uv or vim.loop
+local file_status_renderer = require("ui.file_status_renderer")
 
 local config = {
     width = 32,
@@ -240,8 +241,10 @@ local function build_lines(root, expanded)
         local indent = string.rep("  ", entry.depth)
         local icon = is_dir and (entry.expanded and "▾ " or "▸ ") or "  "
 
-        table.insert(lines, indent .. icon .. entry.name)
         entry.ignored = ignored_lookup[entry.path] == true
+        local indicator = file_status_renderer.get_indicator(entry)
+        local symbol = indicator.symbol ~= "" and (" " .. indicator.symbol) or ""
+        table.insert(lines, indent .. icon .. entry.name .. symbol)
         table.insert(line_entries, entry)
     end
 
@@ -362,6 +365,13 @@ local function apply_highlights(bufnr, line_entries)
             vim.api.nvim_buf_add_highlight(bufnr, namespace, config.ignored_highlight, index - 1, 0, -1)
         end
     end
+
+    for index, entry in ipairs(line_entries) do
+        local indicator = file_status_renderer.get_indicator(entry)
+        if indicator.highlight then
+            vim.api.nvim_buf_add_highlight(bufnr, namespace, indicator.highlight, index - 1, 0, -1)
+        end
+    end
 end
 
 local function render()
@@ -413,6 +423,7 @@ function M.refresh()
     end
 
     render()
+    file_status_renderer.refresh(state.root)
 end
 
 function M.toggle()
@@ -437,6 +448,7 @@ function M.toggle()
     state.root = resolve_root()
     state.expanded[state.root] = true
 
+    file_status_renderer.refresh_sync(state.root)
     open_sidebar_window()
 end
 
@@ -456,8 +468,11 @@ function M.open_or_toggle()
 
     local target_win = get_edit_window()
     if not target_win then
-        notify("Sidebar explorer cannot find an editing window for: " .. entry.path)
-        return
+        vim.api.nvim_set_current_win(state.winid)
+        vim.cmd("rightbelow vsplit")
+        target_win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_width(state.winid, config.width)
+        vim.api.nvim_set_current_win(state.winid)
     end
 
     if not path_exists(entry.path) then
@@ -504,6 +519,26 @@ function M.setup(options)
         fg = "#6c6c6c",
         ctermfg = 242,
         italic = true,
+    })
+
+    local cfg = require("config")
+    vim.api.nvim_set_hl(0, cfg.highlights.modified,  { fg = "#e5c07b", bold = true })
+    vim.api.nvim_set_hl(0, cfg.highlights.added,     { fg = "#98c379" })
+    vim.api.nvim_set_hl(0, cfg.highlights.deleted,   { fg = "#e06c75" })
+    vim.api.nvim_set_hl(0, cfg.highlights.renamed,   { fg = "#61afef" })
+    vim.api.nvim_set_hl(0, cfg.highlights.untracked, { fg = "#abb2bf" })
+    vim.api.nvim_set_hl(0, cfg.highlights.ignored,   { fg = "#6c6c6c", italic = true })
+    vim.api.nvim_set_hl(0, cfg.highlights.staged,    { fg = "#98c379", bold = true })
+    vim.api.nvim_set_hl(0, cfg.highlights.partial,   { fg = "#e5c07b" })
+
+    vim.api.nvim_create_autocmd("BufWritePost", {
+        callback = function(ev)
+            local buf_path = vim.api.nvim_buf_get_name(ev.buf)
+            if buf_path ~= "" and state.root and vim.startswith(buf_path, state.root) then
+                file_status_renderer.refresh(state.root)
+                M.refresh()
+            end
+        end,
     })
 
     pcall(vim.api.nvim_del_user_command, "SidebarToggle")

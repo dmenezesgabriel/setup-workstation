@@ -196,6 +196,7 @@ package.path = table.concat(
 )
 
 require("sidebar_explorer").setup()
+require("ui.gutter_renderer").setup()
 
 -- ===========================================================================
 -- Language options

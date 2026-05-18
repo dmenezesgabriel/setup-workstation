@@ -1,6 +1,6 @@
 ---
 id: "{{NUMBER}}"
-issue: "{{issues/001-slug.md}}"
+issue: "{{tasks/issues/001-slug.md}}"
 created: {{YYYY-MM-DD}}
 updated: {{YYYY-MM-DD}}
 ---
@@ -9,7 +9,7 @@ updated: {{YYYY-MM-DD}}
 
 ## Related Task
 
-- `<issues/001-example-task.md>`
+- `<tasks/issues/001-example-task.md>`
 
 ## Files Changed
 

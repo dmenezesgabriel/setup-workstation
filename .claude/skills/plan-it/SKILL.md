@@ -33,28 +33,29 @@ Do not use plan-it when:
 6. Identify whether any task requires an ADR stub. If yes, read [adr-rules.md](references/adr-rules.md) before writing the stub.
 7. Create prioritized tasks with dependencies and enough context to execute. Read [planning-rules.md — Priority and Dependencies](references/planning-rules.md#priority) for priority and dependency guidance.
 8. Select test types. Read [test-selection.md](references/test-selection.md) before choosing unit, integration, smoke, E2E, regression, performance, security, usability, or observability tests.
-9. Define requirements, acceptance criteria, and observability. If two requirements contradict each other, flag the conflict explicitly in the task under "Unresolved assumptions" — do not silently pick one interpretation. (See [planning-rules.md — Task sections](references/planning-rules.md#task-sections).)
-10. Classify each task as **AFK** (can be completed autonomously by an agent without human review) or **HITL** (requires human involvement at a named decision point — state the decision). Read [planning-rules.md — HITL/AFK classification](references/planning-rules.md#hitlafk-classification) for criteria.
-11. Write one Markdown issue file per task in `issues/`. Read [output-files.md](references/output-files.md) for naming conventions. Use [assets/task-template.md](assets/task-template.md) as the exact structure.
-12. Write ADR stubs in `docs/adrs/` only when architecture decisions are needed. Use [assets/adr-template.md](assets/adr-template.md) as the exact structure.
-13. If domain terms were defined or clarified during planning, add them to `CONTEXT.md` at the project root using the format in [assets/context-template.md](assets/context-template.md).
+9. Evaluate diagram merit for each task. Include a Mermaid diagram in the task's Context section only when the trigger condition is met: the relationship or flow cannot be expressed in ≤3 bullet points, or ≥3 components interact. Read [diagram-rules.md](references/diagram-rules.md) for diagram type selection, placement, and formatting.
+10. Define requirements, acceptance criteria, and observability. If two requirements contradict each other, flag the conflict explicitly in the task under "Unresolved assumptions" — do not silently pick one interpretation. (See [planning-rules.md — Task sections](references/planning-rules.md#task-sections).)
+11. Classify each task as **AFK** (can be completed autonomously by an agent without human review) or **HITL** (requires human involvement at a named decision point — state the decision). Read [planning-rules.md — HITL/AFK classification](references/planning-rules.md#hitlafk-classification) for criteria.
+12. Write one Markdown issue file per task in `tasks/issues/`. Read [output-files.md](references/output-files.md) for naming conventions. Use [assets/task-template.md](assets/task-template.md) as the exact structure.
+13. Write ADR stubs in `docs/adrs/` only when architecture decisions are needed. Use [assets/adr-template.md](assets/adr-template.md) as the exact structure.
+14. If domain terms were defined or clarified during planning, add them to `CONTEXT.md` at the project root using the format in [assets/context-template.md](assets/context-template.md).
 
 ## Issue output requirement
 
-After all tasks are defined, create one Markdown file per task in `issues/`.
+After all tasks are defined, create one Markdown file per task in `tasks/issues/`.
 
 Before writing issue files, run:
 
 ```bash
-mkdir -p issues
+mkdir -p tasks/issues
 ```
 
 Then write task files using priority and dependency order:
 
 ```text
-issues/001-create-project.md
-issues/002-invite-project-member.md
-issues/003-protect-project-settings.md
+tasks/issues/001-create-project.md
+tasks/issues/002-invite-project-member.md
+tasks/issues/003-protect-project-settings.md
 ```
 
 ## ADR output requirement
@@ -81,7 +82,7 @@ docs/adrs/003-use-opentelemetry.md
 
 ## Before marking complete
 
-- [ ] Every issue file in `issues/` has no empty required sections
+- [ ] Every issue file in `tasks/issues/` has no empty required sections
 - [ ] Task numbering reflects dependency order (no task numbered before one it depends on)
 - [ ] ADR stubs exist for every task that depends on an architectural decision
 - [ ] Each task has an AFK or HITL classification with a named reason
@@ -90,7 +91,7 @@ docs/adrs/003-use-opentelemetry.md
 ## If output fails
 
 If files cannot be created:
-- Verify the directory exists: `ls -ld issues/` — if not, run `mkdir -p issues`
+- Verify the directory exists: `ls -ld tasks/issues/` — if not, run `mkdir -p tasks/issues`
 - Report the error and propose an alternative output location if needed.
 
 ## Anti-patterns to avoid
