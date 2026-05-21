@@ -7,8 +7,9 @@ If no argument given, it will estimate every .gguf in the models dir.
 import os, sys, json, subprocess
 from pathlib import Path
 
-ROUTER_DIR = os.environ.get('ROUTER_DIR', str(Path.home()/'.local/openwebui-llamacpp'))
-MODELS_DIR = os.environ.get('MODELS_DIR', str(Path(ROUTER_DIR)/'models'))
+LLAMACPP_HOME = os.environ.get('LLAMACPP_HOME') or os.environ.get('ROUTER_DIR') or str(Path.home()/'.local/llamacpp')
+ROUTER_DIR = LLAMACPP_HOME
+MODELS_DIR = os.environ.get('MODELS_DIR', str(Path(LLAMACPP_HOME)/'models'))
 API_URL = os.environ.get('API_URL', 'http://127.0.0.1:8080')
 
 def human_mib(x):

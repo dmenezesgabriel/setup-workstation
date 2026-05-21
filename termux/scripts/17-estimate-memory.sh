@@ -6,14 +6,15 @@ set -euo pipefail
 # Usage: scripts/17-estimate-memory.sh [model-id-or-filename]
 # If called with no arg, it will estimate for every model in MODELS_DIR.
 
-ROUTER_DIR="${ROUTER_DIR:-${HOME}/.local/openwebui-llamacpp}"
-MODELS_DIR="${MODELS_DIR:-${ROUTER_DIR}/models}"
+LLAMACPP_HOME="${LLAMACPP_HOME:-${ROUTER_DIR:-${HOME}/.local/llamacpp}}"
+ROUTER_DIR="${LLAMACPP_HOME}"
+MODELS_DIR="${MODELS_DIR:-${LLAMACPP_HOME}/models}"
 API_URL="http://127.0.0.1:8080"
 
 # convert bytes to MiB
 b2m() {
   # convert bytes to MiB using awk; argument passed as $1
-  echo "$1" | awk '{printf "%.2f", $1/1024/1024}'
+  awk -v bytes="$1" 'BEGIN{printf "%.2f", bytes/1024/1024}'
 }
 
 # get system MemAvailable MiB
@@ -65,8 +66,6 @@ estimate_for() {
 
   # If we still have no file but server meta JSON contains an entry for the id, try to extract meta fields
   if [ -z "${model_file}" ] && [ -n "${meta_json}" ]; then
-    # attempt to find object with id equal to input and parse meta fields
-    entry=$(printf '%s' "${meta_json}" | awk -v id="${input}" 'BEGIN{RS="\n"} /"id"/ && index($0,id){print; exit}') || true
     # fallback: parse using jq if available
     if command -v jq >/dev/null 2>&1; then
       size=$(printf '%s' "${meta_json}" | jq -r --arg id "$input" '.data[] | select(.id==$id) | .meta.size // empty' 2>/dev/null || true)
@@ -83,9 +82,9 @@ estimate_for() {
   fi
 
   # If still no size but file exists in MODELS_DIR, use that
-  if [ $model_size_bytes -eq 0 ]; then
+  if [ "${model_size_bytes}" -eq 0 ]; then
     # try find any matching gguf in MODELS_DIR containing input
-    fmatch=$(ls -1 ${MODELS_DIR}/*${input}* 2>/dev/null | head -n1 || true)
+    fmatch=$(find "${MODELS_DIR}" -maxdepth 1 -type f -name "*${input}*" | head -n1 || true)
     if [ -n "$fmatch" ] && [ -f "$fmatch" ]; then
       model_file="$fmatch"
       model_size_bytes=$(stat -c%s "$model_file" 2>/dev/null || stat -f%z "$model_file" 2>/dev/null || echo 0)
@@ -93,25 +92,25 @@ estimate_for() {
   fi
 
   # If still zero size, skip
-  if [ $model_size_bytes -eq 0 ]; then
+  if [ "${model_size_bytes}" -eq 0 ]; then
     printf "%s: could not determine model file or size for '%s'\n" "$(date -u +%FT%TZ)" "$input"
     return 1
   fi
 
-  model_size_mib=$(printf '%s' "$model_size_bytes" | b2m)
+  model_size_mib=$(b2m "${model_size_bytes}")
 
   # Conservative multipliers
   # model_mem ~ model_size * 1.2 (repack + buffers)
-  model_mem_mib=$(awk -v s=$model_size_mib 'BEGIN{printf "%.2f", s*1.2}')
+  model_mem_mib=$(awk -v s="${model_size_mib}" 'BEGIN{printf "%.2f", s*1.2}')
 
   # Estimate KV cache memory: assume per-token kv ~ n_embd * 2 bytes, times n_ctx and some layer factor
   # We'll use: kv_mib = n_ctx * n_embd * 2 * (n_layer/12) / 1024^2 * 1.1
-  kv_mib=$(awk -v nctx=$n_ctx -v nemb=$n_embd -v nl=$n_layer 'BEGIN{printf "%.2f", (nctx * nemb * 2 * (nl/12))/1024/1024 * 1.1}')
+  kv_mib=$(awk -v nctx="${n_ctx}" -v nemb="${n_embd}" -v nl="${n_layer}" 'BEGIN{printf "%.2f", (nctx * nemb * 2 * (nl/12))/1024/1024 * 1.1}')
 
   # Compute overhead (buffers, compute) conservatively as 256 MiB
   overhead_mib=256
 
-  total_mib=$(awk -v a=$model_mem_mib -v b=$kv_mib -v c=$overhead_mib 'BEGIN{printf "%.2f", a+b+c}')
+  total_mib=$(awk -v a="${model_mem_mib}" -v b="${kv_mib}" -v c="${overhead_mib}" 'BEGIN{printf "%.2f", a+b+c}')
 
   mem_avail=$(get_mem_avail_mib)
 
@@ -125,7 +124,7 @@ estimate_for() {
   printf "  TOTAL_ESTIMATED: %s MiB\n" "$total_mib"
   printf "  MemAvailable on system: %s MiB\n" "$mem_avail"
 
-  if awk -v t=$total_mib -v m=$mem_avail 'BEGIN{exit !(m>t+128)}'; then
+  if awk -v t="${total_mib}" -v m="${mem_avail}" 'BEGIN{exit !(m>t+128)}'; then
     printf "  => Likely safe to load (room >128 MiB)\n"
   else
     printf "  => WARNING: Not enough available memory to load safely; consider reducing ctx-size or using a smaller model.\n"

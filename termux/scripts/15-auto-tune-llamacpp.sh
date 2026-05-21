@@ -2,11 +2,12 @@
 set -euo pipefail
 
 # Auto-tune recommendations for llama.cpp server on constrained devices.
-# Writes ~/.local/openwebui-llamacpp/config.env with conservative, reproducible defaults.
+# Writes ~/.local/llamacpp/config.env with conservative, reproducible defaults.
 
-ROUTER_DIR="${ROUTER_DIR:-${HOME}/.local/openwebui-llamacpp}"
-CONFIG_FILE="${ROUTER_DIR}/config.env"
-mkdir -p "${ROUTER_DIR}"
+LLAMACPP_HOME="${LLAMACPP_HOME:-${ROUTER_DIR:-${HOME}/.local/llamacpp}}"
+ROUTER_DIR="${LLAMACPP_HOME}"
+CONFIG_FILE="${LLAMACPP_HOME}/config.env"
+mkdir -p "${LLAMACPP_HOME}"
 
 # Detect memory (kB)
 mem_kb=0
@@ -22,40 +23,44 @@ elif [ -r /proc/cpuinfo ]; then
   cpu_cores=$(grep -c '^processor' /proc/cpuinfo || echo 1)
 fi
 
-# Determine defaults based on memory
-# thresholds (in kB): small < 3.5GB (3500000), medium < 6GB (6000000)
+# Determine defaults based on memory.
+# This device has ~5.5 GiB RAM and can easily OOM when router mode auto-loads a model
+# with default ctx/parallel/warmup settings, so prefer conservative memory-first defaults.
 if [ "$mem_kb" -gt 0 ] && [ "$mem_kb" -lt 3500000 ]; then
-  # very constrained device
   LLAMA_THREADS=1
   LLAMA_THREADS_BATCH=1
-  LLAMA_FIT=on
-  LLAMA_FIT_TARGET=128
   LLAMA_NO_MMAP=1
-elif [ "$mem_kb" -lt 6000000 ]; then
-  # modest device
+  LLAMA_CTX_SIZE=384
+  LLAMA_BATCH_SIZE=64
+  LLAMA_UBATCH_SIZE=32
+  LLAMA_FIT_TARGET=2048
+elif [ "$mem_kb" -lt 7000000 ]; then
   LLAMA_THREADS=1
   LLAMA_THREADS_BATCH=1
-  LLAMA_FIT=on
-  LLAMA_FIT_TARGET=256
   LLAMA_NO_MMAP=0
+  LLAMA_CTX_SIZE=256
+  LLAMA_BATCH_SIZE=64
+  LLAMA_UBATCH_SIZE=32
+  LLAMA_FIT_TARGET=2304
 else
-  # more capable
-  LLAMA_THREADS=2
+  LLAMA_THREADS=3
   LLAMA_THREADS_BATCH=2
-  LLAMA_FIT=on
-  LLAMA_FIT_TARGET=1024
   LLAMA_NO_MMAP=0
+  LLAMA_CTX_SIZE=1024
+  LLAMA_BATCH_SIZE=256
+  LLAMA_UBATCH_SIZE=128
+  LLAMA_FIT_TARGET=1024
 fi
 
-# Adjust threads downward if CPU has few cores
 if [ "$cpu_cores" -le 2 ]; then
   LLAMA_THREADS=1
   LLAMA_THREADS_BATCH=1
 fi
 
-# Common extra args to reduce memory footprint: set conservative context size to reduce KV cache
-# and avoid passing unsupported flags.
-LLAMA_EXTRA_ARGS="--ctx-size 2048"
+LLAMA_COMMON_ARGS=""
+LLAMA_ROUTER_ARGS="--parallel 1 --models-max 1 --ctx-size ${LLAMA_CTX_SIZE} --batch-size ${LLAMA_BATCH_SIZE} --ubatch-size ${LLAMA_UBATCH_SIZE} --fit on --fit-target ${LLAMA_FIT_TARGET} --fit-ctx ${LLAMA_CTX_SIZE} --no-warmup --threads-http 1"
+LLAMA_SERVER_ARGS="--ctx-size ${LLAMA_CTX_SIZE} --batch-size ${LLAMA_BATCH_SIZE} --ubatch-size ${LLAMA_UBATCH_SIZE} --fit on --fit-target ${LLAMA_FIT_TARGET} --fit-ctx ${LLAMA_CTX_SIZE} --no-warmup --threads-http 1"
+LLAMA_CLI_ARGS="--ctx-size ${LLAMA_CTX_SIZE} --batch-size ${LLAMA_BATCH_SIZE} --ubatch-size ${LLAMA_UBATCH_SIZE} --no-warmup"
 
 # Write config
 cat > "$CONFIG_FILE" <<EOF
@@ -63,15 +68,20 @@ cat > "$CONFIG_FILE" <<EOF
 # Tune values for constrained device. Override by editing or exporting env vars before starting.
 export LLAMA_THREADS=${LLAMA_THREADS}
 export LLAMA_THREADS_BATCH=${LLAMA_THREADS_BATCH}
-export LLAMA_FIT=${LLAMA_FIT}
-export LLAMA_FIT_TARGET=${LLAMA_FIT_TARGET}
 export LLAMA_NO_MMAP=${LLAMA_NO_MMAP}
-export LLAMA_EXTRA_ARGS='${LLAMA_EXTRA_ARGS}'
+export LLAMA_CTX_SIZE=${LLAMA_CTX_SIZE}
+export LLAMA_BATCH_SIZE=${LLAMA_BATCH_SIZE}
+export LLAMA_UBATCH_SIZE=${LLAMA_UBATCH_SIZE}
+export LLAMA_FIT_TARGET=${LLAMA_FIT_TARGET}
+export LLAMA_COMMON_ARGS='${LLAMA_COMMON_ARGS}'
+export LLAMA_ROUTER_ARGS='${LLAMA_ROUTER_ARGS}'
+export LLAMA_SERVER_ARGS='${LLAMA_SERVER_ARGS}'
+export LLAMA_CLI_ARGS='${LLAMA_CLI_ARGS}'
 EOF
 
 printf "Wrote config to %s\n" "$CONFIG_FILE"
 printf "Detected: mem_kb=%s cpu_cores=%s\n" "$mem_kb" "$cpu_cores"
-printf "Recommended: LLAMA_THREADS=%s LLAMA_FIT_TARGET=%s LLAMA_NO_MMAP=%s\n" "$LLAMA_THREADS" "$LLAMA_FIT_TARGET" "$LLAMA_NO_MMAP"
+printf "Recommended: LLAMA_THREADS=%s LLAMA_CTX_SIZE=%s LLAMA_BATCH_SIZE=%s LLAMA_FIT_TARGET=%s\n" "$LLAMA_THREADS" "$LLAMA_CTX_SIZE" "$LLAMA_BATCH_SIZE" "$LLAMA_FIT_TARGET"
 
 # Print the config for confirmation
 cat "$CONFIG_FILE"

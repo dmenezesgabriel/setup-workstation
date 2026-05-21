@@ -31,19 +31,13 @@ main() {
         fi
     fi
 
-    # Detect architecture and CPU features and prepare tuned CFLAGS for Snapdragon 865
-    local ARCH CFLAGS CXXFLAGS CMAKE_GENERATOR JOBS USE_CCACHE REPRO_COMMIT
-    ARCH="$(uname -m)"
+    local CFLAGS CXXFLAGS CMAKE_GENERATOR JOBS USE_CCACHE REPRO_COMMIT
 
-    # Conservative, reproducible flags for aarch64 Snapdragon 865 (Cortex-A77 cores)
     CFLAGS="-O3 -fPIC -fomit-frame-pointer -march=armv8.2-a -mtune=cortex-a77"
     CXXFLAGS="${CFLAGS}"
-
-    # Prefer Ninja and limit parallelism for low-RAM devices. Allow override via MAX_JOBS env var.
     CMAKE_GENERATOR="Ninja"
     JOBS="${MAX_JOBS:-2}"
 
-    # Try to use ccache when available to speed repeated builds and reduce IO
     if command -v ccache >/dev/null 2>&1; then
         USE_CCACHE=1
         info "ccache detected -> enabling CMake compiler launcher"
@@ -51,7 +45,6 @@ main() {
         USE_CCACHE=0
     fi
 
-    # Allow reproducible builds by checking out a specific commit if LLAMA_COMMIT is provided
     if [ -n "${LLAMA_COMMIT:-}" ]; then
         REPRO_COMMIT="${LLAMA_COMMIT}"
         info "Checking out requested commit ${REPRO_COMMIT} for reproducible build"
@@ -68,86 +61,89 @@ main() {
 
     info "Configuring CMake (generator=${CMAKE_GENERATOR})"
 
-    # Build minimal set to reduce memory: disable tests/examples/server, enable tools (cli)
     local CMAKE_ARGS="-G ${CMAKE_GENERATOR} -DCMAKE_BUILD_TYPE=Release \
-        -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF \
+        -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=ON \
         -DLLAMA_BUILD_TOOLS=ON -DLLAMA_BUILD_COMMON=ON \
         -DGGML_OPENMP=OFF -DBUILD_SHARED_LIBS=OFF"
 
-    # Add ccache launcher if available
     if [ "${USE_CCACHE}" = "1" ]; then
         CMAKE_ARGS+=" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
     fi
 
-    # Preserve any user-supplied extra args
     if [ -n "${LLAMA_CMAKE_ARGS:-}" ]; then
         CMAKE_ARGS+=" ${LLAMA_CMAKE_ARGS}"
     fi
 
-    # Export flags so CMake picks them up
     export CFLAGS CXXFLAGS
 
+    # shellcheck disable=SC2086
     if ! run_with_spinner_arr "cmake configure" -- cmake -S . -B build ${CMAKE_ARGS}; then
         fail_step "cmake configure failed"
         return 1
     fi
 
-    info "Building a minimal set of targets to save RAM (jobs=${JOBS})"
+    info "Building standalone llama.cpp targets (jobs=${JOBS})"
 
-    # Candidate targets in order of preference. We'll try to build them sequentially until one succeeds.
-    local -a TARGETS=(llama-cli llama-completion llama-simple llama-bench)
-    local built=0 built_target="" tgt
+    local -a TARGETS=(llama-cli llama-server server llama-simple llama-bench)
+    local -a BUILT_TARGETS=()
+    local built_any=0
+    local tgt
 
     for tgt in "${TARGETS[@]}"; do
         info "Attempting to build target: ${tgt} (if present)"
         if run_with_spinner_arr "cmake build ${tgt}" -- cmake --build build --target "${tgt}" -- -j "${JOBS}"; then
-            built=1
-            built_target="${tgt}"
-            break
+            BUILT_TARGETS+=("${tgt}")
+            built_any=1
         else
-            warn "Build of ${tgt} failed or target missing; trying next target"
+            warn "Build of ${tgt} failed or target missing; continuing"
         fi
     done
 
-    if [ "${built}" -ne 1 ]; then
+    if [ "${built_any}" -ne 1 ]; then
         warn "No preferred targets built successfully; attempting a generic build with limited parallelism (may still OOM)"
         if ! run_with_spinner_arr "cmake build all" -- cmake --build build -- -j 1; then
             fail_step "cmake build failed (no targets succeeded)"
             return 1
         fi
-        built_target=""
     fi
 
-    # Determine produced binary path for the built target (fallbacks)
-    local BIN=""
-    case "${built_target}" in
-        llama-cli) BIN="build/bin/llama-cli" ;;
-        llama-completion) BIN="build/bin/llama-completion" ;;
-        llama-simple) BIN="build/bin/llama-simple" ;;
-        llama-bench) BIN="build/bin/llama-bench" ;;
-        "") BIN="$(ls -1 build/bin 2>/dev/null | head -n1)" ;;
-    esac
-
-    if [ -n "${BIN}" ] && [ -f "${DEST_DIR}/${BIN}" ]; then
-        info "Built binary: ${DEST_DIR}/${BIN}"
-        # Strip to save space if strip available
-        if command -v strip >/dev/null 2>&1; then
-            run_with_spinner_arr "strip binary" -- strip -s "${DEST_DIR}/${BIN}" || true
-            info "Stripped binary to reduce size"
+    local -a FOUND_BINS=()
+    local candidate
+    for candidate in \
+        "${DEST_DIR}/build/bin/llama-cli" \
+        "${DEST_DIR}/build/bin/llama-server" \
+        "${DEST_DIR}/build/bin/server" \
+        "${DEST_DIR}/build/bin/llama-simple" \
+        "${DEST_DIR}/build/bin/llama-bench"; do
+        if [ -f "${candidate}" ]; then
+            FOUND_BINS+=("${candidate}")
+            if command -v strip >/dev/null 2>&1; then
+                run_with_spinner_arr "strip $(basename "${candidate}")" -- strip -s "${candidate}" || true
+            fi
         fi
-        log_file "binary: ${DEST_DIR}/${BIN}"
-    else
+    done
+
+    if [ "${#FOUND_BINS[@]}" -eq 0 ]; then
         warn "Build finished but no expected binaries found in build/bin"
         log_file "binaries: $(ls -1 build/bin 2>/dev/null || true)"
         fail_step "llama build: binary not found"
         return 1
     fi
 
-    # Record reproducible metadata
-    printf '%s\n' "commit: $(git -C "${DEST_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)" "cmake_args: ${CMAKE_ARGS}" "cflags: ${CFLAGS}" > "${DEST_DIR}/build/BUILD_INFO.txt" || true
+    local build_info="${DEST_DIR}/build/BUILD_INFO.txt"
+    {
+        printf '%s\n' "commit: $(git -C "${DEST_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+        printf '%s\n' "cmake_args: ${CMAKE_ARGS}"
+        printf '%s\n' "cflags: ${CFLAGS}"
+        printf '%s\n' "built_targets: ${BUILT_TARGETS[*]:-generic-build}"
+        printf '%s\n' "binaries:"
+        printf '  - %s\n' "${FOUND_BINS[@]}"
+    } > "${build_info}" || true
 
     echo ""
-    info "llama.cpp build finished (minimal CLI build)"
+    info "llama.cpp build finished"
+    printf 'Built binaries:\n'
+    printf '  - %s\n' "${FOUND_BINS[@]}"
 }
 
 main "$@"

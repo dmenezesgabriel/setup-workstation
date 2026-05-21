@@ -1,14 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Straightforward, single-command bootstrap for OpenWebUI + llama.cpp (router mode).
+# Straightforward, single-command bootstrap for OpenWebUI + llama.cpp.
 # Behavior:
-#  - Builds llama.cpp server if missing (calls scripts/12-llamacpp.sh)
+#  - Builds standalone llama.cpp server + cli binaries (calls scripts/12-llamacpp.sh)
 #  - Runs the idempotent installer (scripts/14-openwebui-llamacpp-auto.sh)
 #  - Auto-tunes hardware config (scripts/15-auto-tune-llamacpp.sh)
-#  - Starts the supervised server (owui-start)
+#  - Starts router mode for OpenWebUI compatibility
 #  - Does NOT download large models by default. To enable model download, set
 #      DOWNLOAD_LFM2_5=1 HF_TOKEN=your_token
 #  Usage (from repo root):
@@ -21,7 +21,6 @@ HF_TOKEN="${HF_TOKEN:-}"
 
 info() { printf "\033[0;32m✓\033[0m %s\n" "$*"; }
 warn() { printf "\033[0;33m⚠\033[0m %s\n" "$*"; }
-fail() { printf "\033[0;31m✖\033[0m %s\n" "$*"; exit 1; }
 
 # Ensure we run from the repo (best effort)
 if [ ! -f "${REPO_ROOT}/scripts/12-llamacpp.sh" ]; then
@@ -52,22 +51,22 @@ DOWNLOAD_LFM2_5=${DOWNLOAD_LFM2_5} HF_TOKEN="${HF_TOKEN}" bash "${REPO_ROOT}/scr
 info "Auto-tuning hardware settings"
 bash "${REPO_ROOT}/scripts/15-auto-tune-llamacpp.sh"
 
-# Step 4: Start supervised server
-info "Starting supervised server (owui-start)"
-# ensure start helper exists
-if [ -x "${HOME}/.local/bin/start-llama-openwebui.sh" ]; then
-  "${HOME}/.local/bin/start-llama-openwebui.sh" start || warn "start helper failed"
+# Step 4: Start router mode for OpenWebUI
+info "Starting router mode (owui-start)"
+if [ -x "${HOME}/.local/bin/llamacpp" ]; then
+  "${HOME}/.local/bin/llamacpp" router-start || warn "router start failed"
 else
-  warn "start helper not found; you can start the server manually: ~/.local/openwebui-llamacpp/run-llama-server.sh"
+  warn "llamacpp helper not found; rerun scripts/14-openwebui-llamacpp-auto.sh"
 fi
 
 # Step 5: Quick health check
 sleep 2
 if curl -sS --max-time 5 http://127.0.0.1:8080/v1/models >/dev/null 2>&1; then
   info "Server appears to be responding on http://127.0.0.1:8080"
-  info "Use: owui-start / owui-stop / owui-status to manage the server"
+  info "Use: owui-start / owui-stop / owui-status to manage router mode"
+  info "Use: llama-server / llama-server-start / llama-cli for standalone llama.cpp"
 else
-  warn "Server did not respond on http://127.0.0.1:8080; check logs: ~/.local/openwebui-llamacpp/llama-server.log"
+  warn "Server did not respond on http://127.0.0.1:8080; check logs: ~/.local/llamacpp/router.log"
 fi
 
 info "Bootstrap finished."
@@ -75,9 +74,12 @@ info "Bootstrap finished."
 # Print simple next steps
 echo
 echo "Quick commands (aliases are added to ~/.zshrc):"
-echo "  owui-start    # start the supervised server"
-echo "  owui-stop     # stop the supervised server"
-echo "  owui-status   # check status"
+echo "  owui-start         # start router mode for OpenWebUI"
+echo "  owui-stop          # stop router mode"
+echo "  owui-status        # check router mode"
+echo "  llama-server       # run standalone single-model server in foreground"
+echo "  llama-server-start # start standalone single-model server in background"
+echo "  llama-cli          # run llama.cpp CLI"
 echo "  scripts/17-estimate-memory.py   # estimate memory for models"
 echo
 exit 0

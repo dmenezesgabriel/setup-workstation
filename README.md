@@ -68,6 +68,37 @@ curl -o ~/.tmux.conf https://raw.githubusercontent.com/dmenezesgabriel/setup-wor
 tree -L 2 -I "node_modules" -a
 ```
 
+## Termux llama.cpp / OpenWebUI
+
+```sh
+cd termux
+bash scripts/12-llamacpp.sh                  # build llama-cli + llama-server
+bash scripts/14-openwebui-llamacpp-auto.sh   # install helper + aliases + auto-tune + start router
+bash scripts/15-auto-tune-llamacpp.sh        # optional: regenerate safe device-specific config
+```
+
+Main commands after setup:
+
+```sh
+llamacpp router-start
+llamacpp router-stop
+llamacpp router-status
+llamacpp server-start ~/.local/llamacpp/models/Qwen3.5-0.8B-Q4_0.gguf
+llamacpp cli ~/.local/llamacpp/models/Qwen3.5-0.8B-Q4_0.gguf
+``````
+
+Generated runtime config:
+
+```sh
+~/.local/llamacpp/config.env
+```
+
+Generated models directory:
+
+```sh
+~/.local/llamacpp/models
+```
+
 ## Resources
 
 - [ubuntu-x11-app.sh](https://github.com/01101010110/proot-distro-scripts/blob/main/ubuntu-x11-app.sh)

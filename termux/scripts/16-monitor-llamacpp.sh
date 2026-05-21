@@ -7,15 +7,16 @@ set -euo pipefail
 
 INTERVAL=${1:-10}
 ITER=${2:-3}
-ROUTER_DIR="${ROUTER_DIR:-${HOME}/.local/openwebui-llamacpp}"
-LOGFILE="${ROUTER_DIR}/monitor.log"
-PIDFILE="${ROUTER_DIR}/run-llama-server.pid"
+LLAMACPP_HOME="${LLAMACPP_HOME:-${ROUTER_DIR:-${HOME}/.local/llamacpp}}"
+ROUTER_DIR="${LLAMACPP_HOME}"
+LOGFILE="${LLAMACPP_HOME}/monitor.log"
+PIDFILE="${LLAMACPP_HOME}/router.pid"
 API_URL="http://127.0.0.1:8080"
 
 printf '# Monitor start: %s\n' "$(date -u +%FT%TZ)" >"${LOGFILE}"
 printf 'Interval=%s seconds, Iterations=%s\n' "${INTERVAL}" "${ITER}" >>"${LOGFILE}"
 
-for i in $(seq 1 ${ITER}); do
+for i in $(seq 1 "${ITER}"); do
   ts="$(date -u +%FT%TZ)"
   printf '\n=== ITER %s / %s @ %s ===\n' "$i" "${ITER}" "$ts" | tee -a "${LOGFILE}"
 
