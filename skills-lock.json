@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "implement-it": {
+      "source": "dmenezesgabriel/agent-harness",
+      "sourceType": "github",
+      "skillPath": "skills/implement-it/SKILL.md",
+      "computedHash": "30db67649354ad80e5d003f4ef9217ef0cff9acc27e8b35b8539562e9962a6d4"
+    },
+    "plan-it": {
+      "source": "dmenezesgabriel/agent-harness",
+      "sourceType": "github",
+      "skillPath": "skills/plan-it/SKILL.md",
+      "computedHash": "2655f6b6066847530d54d01dae70e3ea6f6aa32536627392c324873dfccf322e"
+    },
+    "review-it": {
+      "source": "dmenezesgabriel/agent-harness",
+      "sourceType": "github",
+      "skillPath": "skills/review-it/SKILL.md",
+      "computedHash": "ac24720853df9c472d1287fec616f4405f71e86218730e804f8bdb135640dfa6"
+    }
+  }
+}
