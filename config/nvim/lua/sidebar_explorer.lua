@@ -113,6 +113,7 @@ local function ensure_buffer()
 
     vim.keymap.set("n", "<LeftMouse>", function()
         local pos = vim.fn.getmousepos()
+        if pos.line < 1 then return end
         vim.api.nvim_win_set_cursor(0, { pos.line, 0 })
         M.open_or_toggle()
     end, { buffer = state.bufnr, silent = true })
@@ -158,11 +159,25 @@ local function render()
     end
 end
 
+local function is_empty_unnamed_win(winid)
+    local buf = vim.api.nvim_win_get_buf(winid)
+    return vim.api.nvim_buf_get_name(buf) == ""
+        and not vim.bo[buf].modified
+        and vim.api.nvim_buf_line_count(buf) == 1
+        and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ""
+end
+
 local function open_sidebar_window()
     local bufnr = ensure_buffer()
 
-    vim.cmd("topleft vsplit")
-    state.winid = vim.api.nvim_get_current_win()
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    if #wins == 1 and is_empty_unnamed_win(wins[1]) then
+        state.winid = wins[1]
+    else
+        vim.cmd("topleft vsplit")
+        state.winid = vim.api.nvim_get_current_win()
+    end
+
     vim.api.nvim_win_set_buf(state.winid, bufnr)
     vim.api.nvim_win_set_width(state.winid, config.width)
 
@@ -321,6 +336,16 @@ function M.setup(options)
                         render()
                     end
                 end)
+            end
+        end,
+    })
+
+    vim.api.nvim_create_autocmd("VimEnter", {
+        group = sidebar_augroup,
+        once = true,
+        callback = function()
+            if vim.fn.argc() == 0 then
+                M.toggle()
             end
         end,
     })
