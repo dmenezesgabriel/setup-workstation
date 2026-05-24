@@ -1,7 +1,8 @@
 local M = {}
 
+local compat     = require("compat")
 local git_status = require("git.status")
-local cfg = require("config")
+local cfg        = require("config")
 
 local cached_status = {}
 local timer = nil
@@ -34,7 +35,7 @@ end
 
 function M.refresh(root, on_done)
     if timer then timer:stop(); timer:close(); timer = nil end
-    local t = vim.uv.new_timer()
+    local t = compat.uv.new_timer()
     timer = t
     t:start(cfg.debounce_ms, 0, vim.schedule_wrap(function()
         if timer ~= t then return end

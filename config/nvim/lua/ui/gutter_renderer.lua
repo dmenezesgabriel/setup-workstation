@@ -1,5 +1,6 @@
 local M = {}
 
+local compat   = require("compat")
 local git_diff = require("git.diff")
 local cfg      = require("config")
 
@@ -55,7 +56,7 @@ local function schedule_render(bufnr)
         timers[bufnr]:close()
         timers[bufnr] = nil
     end
-    local t = vim.uv.new_timer()
+    local t = compat.uv.new_timer()
     timers[bufnr] = t
     t:start(cfg.debounce_ms, 0, vim.schedule_wrap(function()
         timers[bufnr] = nil

@@ -8,6 +8,16 @@
 rsync -a --delete config/nvim/ ~/.config/nvim/
 ```
 
+## Test images
+
+Build the local Neovim images used by `run_tests.sh`:
+
+```sh
+./config/nvim/build_images.sh
+```
+
+The runner builds them automatically before executing each `config/nvim/tests/*.lua` file against the local `v0.8.3`, `v0.9.5`, `v0.10.4`, and `stable` images.
+
 **Without cloning** (one-liner):
 
 ```sh

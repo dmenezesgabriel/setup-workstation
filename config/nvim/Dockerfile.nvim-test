@@ -1,0 +1,20 @@
+FROM debian:bookworm-slim
+
+ARG NVIM_VERSION
+ARG NVIM_TARBALL_URL
+ENV DEBIAN_FRONTEND=noninteractive
+ENV NVIM_INSTALL_DIR=/opt/nvim
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl tar \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN set -eu; \
+  echo "Installing Neovim ${NVIM_VERSION} from ${NVIM_TARBALL_URL}"; \
+  curl -fsSL "$NVIM_TARBALL_URL" -o /tmp/nvim.tar.gz; \
+  mkdir -p "$NVIM_INSTALL_DIR"; \
+  tar -xzf /tmp/nvim.tar.gz -C "$NVIM_INSTALL_DIR" --strip-components=1; \
+  rm -f /tmp/nvim.tar.gz
+
+ENV PATH="/opt/nvim/bin:${PATH}"
+CMD ["nvim", "--headless", "-u", "NONE", "--version"]

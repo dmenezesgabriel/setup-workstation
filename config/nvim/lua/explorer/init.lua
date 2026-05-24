@@ -1,5 +1,6 @@
 local M = {}
 
+local compat = require("compat")
 local uv = vim.uv or vim.loop
 
 local root_markers = {
@@ -113,7 +114,7 @@ function M.get_ignored_lookup(root, paths)
     local path_by_relative = {}
 
     for _, path in ipairs(paths) do
-        local relative = vim.fs.relpath(git_root, path)
+        local relative = compat.fs_relpath(git_root, path)
         if relative then
             table.insert(relative_paths, relative)
             path_by_relative[relative] = path

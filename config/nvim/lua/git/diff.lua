@@ -1,5 +1,7 @@
 local M = {}
 
+local compat = require("compat")
+
 local function system_raw(command)
     if vim.system then
         local result = vim.system(command, { text = true }):wait()
@@ -58,7 +60,7 @@ function M.get(path, staged)
     end
 
     local git_root = vim.fs.normalize(vim.fs.dirname(git_marker))
-    local rel_path = vim.fs.relpath(git_root, path)
+    local rel_path = compat.fs_relpath(git_root, path)
     if not rel_path then
         return {}
     end
