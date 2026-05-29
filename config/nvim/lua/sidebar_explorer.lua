@@ -2,6 +2,7 @@ local M = {}
 
 local explorer = require("explorer")
 local file_status_renderer = require("ui.file_status_renderer")
+local uv = vim.uv or vim.loop
 
 local config = {
     width = 32,
@@ -23,6 +24,8 @@ local state = {
     root = nil,
     expanded = {},
     line_entries = {},
+    watchers = {},
+    refresh_timer = nil,
 }
 
 local function notify(message, level)
@@ -54,7 +57,9 @@ local function is_sidebar_buffer(bufnr)
 end
 
 local function get_edit_window()
-    if state.source_winid and vim.api.nvim_win_is_valid(state.source_winid) then
+    if state.source_winid
+        and vim.api.nvim_win_is_valid(state.source_winid)
+        and state.source_winid ~= state.winid then
         return state.source_winid
     end
 
@@ -68,7 +73,71 @@ local function get_edit_window()
     return nil
 end
 
+local function stop_watchers()
+    for _, handle in pairs(state.watchers) do
+        if not handle:is_closing() then
+            handle:stop()
+            handle:close()
+        end
+    end
+    state.watchers = {}
+end
+
+local function schedule_refresh()
+    if state.refresh_timer then
+        state.refresh_timer:stop()
+        state.refresh_timer:close()
+        state.refresh_timer = nil
+    end
+
+    local timer = uv.new_timer()
+    state.refresh_timer = timer
+    timer:start(150, 0, vim.schedule_wrap(function()
+        if state.refresh_timer == timer then
+            state.refresh_timer = nil
+        end
+        timer:close()
+        M.refresh()
+    end))
+end
+
+local function watch_dir(path)
+    if state.watchers[path] then return end
+
+    local handle = uv.new_fs_event()
+    if not handle then return end
+
+    local ok = handle:start(path, {}, function(err)
+        if err then return end
+        schedule_refresh()
+    end)
+
+    if ok then
+        state.watchers[path] = handle
+    else
+        if not handle:is_closing() then
+            handle:close()
+        end
+    end
+end
+
+local function update_watchers()
+    stop_watchers()
+    if not state.root or not state.winid or not vim.api.nvim_win_is_valid(state.winid) then
+        return
+    end
+
+    watch_dir(state.root)
+    for path, is_expanded in pairs(state.expanded) do
+        if is_expanded then
+            watch_dir(path)
+        end
+    end
+end
+
 local function close_window()
+    stop_watchers()
+
     if state.winid and vim.api.nvim_win_is_valid(state.winid) then
         vim.api.nvim_win_close(state.winid, true)
     end
@@ -211,6 +280,10 @@ function M.toggle()
     local current_buf = vim.api.nvim_get_current_buf()
 
     if state.winid and vim.api.nvim_win_is_valid(state.winid) then
+        if #vim.api.nvim_tabpage_list_wins(0) <= 1 then
+            return
+        end
+
         if current_win == state.winid then
             state.source_winid = get_edit_window()
         elseif not is_sidebar_buffer(current_buf) then
@@ -230,6 +303,7 @@ function M.toggle()
 
     file_status_renderer.refresh_sync(state.root)
     open_sidebar_window()
+    update_watchers()
 end
 
 function M.open_or_toggle()
@@ -243,6 +317,7 @@ function M.open_or_toggle()
     if entry.type == "directory" then
         state.expanded[entry.path] = not state.expanded[entry.path]
         render()
+        update_watchers()
         return
     end
 
@@ -276,6 +351,7 @@ function M.collapse_or_parent()
     if entry.type == "directory" and state.expanded[entry.path] and not entry.root then
         state.expanded[entry.path] = false
         render()
+        update_watchers()
         return
     end
 
