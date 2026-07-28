@@ -43,8 +43,8 @@ if ! checkpoint 0 "System packages (python, git)"; then
 fi
 
 # ─── Step 1: Install / upgrade udocker ──────────────────
-if ! checkpoint 1 "udocker via pip3"; then
-    pip3 install --upgrade udocker
+if ! checkpoint 1 "udocker via pip"; then
+    python -m pip install --upgrade udocker
     mark_done 1
 fi
 
