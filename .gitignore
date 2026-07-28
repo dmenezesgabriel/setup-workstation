@@ -22,3 +22,4 @@ env/
 
 # Local dependency locks
 lazy-lock.json
+termux_install_udocker.py
