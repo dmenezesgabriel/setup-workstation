@@ -118,6 +118,25 @@ if [ ! -d "$ROOTFS" ]; then
     err "ROOTFS directory not found at $ROOTFS"
 fi
 
+# ─── Invalidate stale container checkpoints ──────────────
+# If the container was recreated after a checkpoint was marked
+# done, the checkpoint is stale and must be cleared.
+# Each container-level step creates a sentinel file inside the
+# container; if the sentinel is gone, the checkpoint is invalid.
+# Recipe: <step> <sentinel_path>
+while IFS=' ' read -r step sentinel; do
+    chkpt="$XDG_HOME/.udocker-desktop/.step_$step"
+    if [ -f "$chkpt" ] && [ ! -f "$ROOTFS/$sentinel" ]; then
+        warn "Stale checkpoint $step ($sentinel missing) — invalidating"
+        rm -f "$chkpt"
+    fi
+done << 'SENTINELS'
+8 usr/local/bin/entrypoint.sh
+11 etc/environment
+12 usr/share/applications/code.desktop
+13 usr/local/bin/opencode
+SENTINELS
+
 # ─── Step 4: Fix rootfs permissions ─────────────────────
 if ! checkpoint 4 "Fix rootfs permissions"; then
     info "Applying 755 permissions on rootfs…"
@@ -160,7 +179,7 @@ if ! checkpoint 7 "Install XFCE + VNC + noVNC"; then
                 xdotool scrot imagemagick curl ca-certificates \
             || true
             dpkg --configure -a || true
-        ' 2>&1 | tee -a "$LOG"
+        ' 2>&1 | tee -a "$LOG" || true
 
     mark_done 7
 fi
@@ -432,7 +451,7 @@ if ! checkpoint 12 "Install Visual Studio Code"; then
                 > /etc/apt/sources.list.d/vscode.list && \
             apt-get update -qq && \
             apt-get install -y code
-        ' 2>&1 | tee -a "$LOG"
+        ' 2>&1 | tee -a "$LOG" || true
     mark_done 12
 fi
 
@@ -445,7 +464,7 @@ if ! checkpoint 13 "Install OpenCode CLI"; then
         "$CONTAINER_NAME" \
         bash -c '
             curl -fsSL https://opencode.ai/install | bash
-        ' 2>&1 | tee -a "$LOG"
+        ' 2>&1 | tee -a "$LOG" || true
     mark_done 13
 fi
 
