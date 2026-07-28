@@ -225,21 +225,9 @@ get_cid() {
 }
 
 cmd_start() {
-    local rm_flag=""
-    local publish_args=()
-    local volume_args=()
-    local remain=()
-
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --rm) rm_flag="--rm" ;;
-            -p|--publish) publish_args+=("--publish=$2"); shift ;;
-            -v|--volume) volume_args+=("--volume=$2"); shift ;;
-            --) shift; remain+=("$@"); break ;;
-            *) remain+=("$1") ;;
-        esac
-        shift
-    done
+    # Stop any previous instances first
+    cmd_stop 2>/dev/null
+    sleep 1
 
     local cid
     cid=$(get_cid)
@@ -251,7 +239,7 @@ cmd_start() {
     echo "Starting desktop container…"
 
     nohup bash -c \
-        "LD_PRELOAD= UDOCKER_USE_PROOT_EXECUTABLE=$PROOT udocker run --user=root \
+        "LD_PRELOAD= UDOCKER_USE_PROOT_EXECUTABLE=$PROOT udocker run --rm --user=root \
             --env=DISPLAY=:99 \
             \"$cid\" \
             /usr/local/bin/entrypoint.sh" \
