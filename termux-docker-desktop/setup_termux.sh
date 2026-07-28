@@ -355,6 +355,15 @@ if ! checkpoint 11 "Configure X11 environment"; then
     # /etc/environment is read by PAM; helps when DISPLAY is not inherited
     echo "DISPLAY=:99" > "$ROOTFS/etc/environment"
 
+    # Wrapper script — works from menus, .desktop files, and non-interactive shells
+    # (Aliases only work in interactive bash, so a real script is needed.)
+    cat > "$ROOTFS/usr/local/bin/code-desktop" << 'WRAPPER'
+#!/bin/bash
+mkdir -p /root/.vscode-data
+exec code --no-sandbox --disable-gpu --disable-dev-shm-usage --user-data-dir=/root/.vscode-data "$@"
+WRAPPER
+    chmod 755 "$ROOTFS/usr/local/bin/code-desktop"
+
     # .bashrc for interactive terminals spawned by xfce4-terminal
     cat > "$ROOTFS/root/.bashrc" << 'BASHRC'
 export DISPLAY=:99
@@ -404,6 +413,34 @@ if ! checkpoint 12 "Install Visual Studio Code"; then
         : > "$ROOTFS/var/lib/dpkg/statoverride"
     fi
     mark_done 12
+fi
+
+# ─── Unconditional fixes (applied every run, idempotent) ──
+# These can't be gated behind checkpoints because a checkpoint
+# that already completed won't re-run if the script is updated.
+info "Applying idempotent environment fixes…"
+
+echo "DISPLAY=:99" > "$ROOTFS/etc/environment"
+
+# Re-ensure the wrapper script exists (it's tiny, no cost to rewrite)
+cat > "$ROOTFS/usr/local/bin/code-desktop" << 'WRAPPER'
+#!/bin/bash
+mkdir -p /root/.vscode-data
+exec code --no-sandbox --disable-gpu --disable-dev-shm-usage --user-data-dir=/root/.vscode-data "$@"
+WRAPPER
+chmod 755 "$ROOTFS/usr/local/bin/code-desktop"
+
+# Ensure DISPLAY is in shell profiles
+if ! grep -q 'DISPLAY=:99' "$ROOTFS/root/.bashrc" 2>/dev/null; then
+    echo "export DISPLAY=:99" >> "$ROOTFS/root/.bashrc"
+fi
+if ! grep -q 'DISPLAY=:99' "$ROOTFS/root/.profile" 2>/dev/null; then
+    echo "export DISPLAY=:99" >> "$ROOTFS/root/.profile"
+fi
+
+# Ensure code-desktop alias in .bashrc
+if ! grep -q 'code-desktop' "$ROOTFS/root/.bashrc" 2>/dev/null; then
+    echo "alias code-desktop='code --no-sandbox --disable-gpu --disable-dev-shm-usage --user-data-dir=/root/.vscode-data'" >> "$ROOTFS/root/.bashrc"
 fi
 
 echo ""
