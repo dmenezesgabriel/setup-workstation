@@ -348,8 +348,43 @@ if ! checkpoint 10 "Add ~/.local/bin to PATH"; then
     mark_done 10
 fi
 
-# ─── Step 11: Install VS Code (optional) ─────────────────
-if ! checkpoint 11 "Install Visual Studio Code"; then
+# ─── Step 11: Configure X11 environment in container ──────
+if ! checkpoint 11 "Configure X11 environment"; then
+    info "Configuring X11 environment (DISPLAY, bashrc, profile)…"
+
+    # /etc/environment is read by PAM; helps when DISPLAY is not inherited
+    echo "DISPLAY=:99" > "$ROOTFS/etc/environment"
+
+    # .bashrc for interactive terminals spawned by xfce4-terminal
+    cat > "$ROOTFS/root/.bashrc" << 'BASHRC'
+export DISPLAY=:99
+alias code-desktop='code --no-sandbox --disable-gpu --disable-dev-shm-usage --user-data-dir=/root/.vscode-data'
+BASHRC
+
+    # .profile for login shells
+    cat > "$ROOTFS/root/.profile" << 'PROFILE'
+export DISPLAY=:99
+PROFILE
+
+    # XFCE desktop launcher for VS Code
+    mkdir -p "$ROOTFS/usr/share/applications"
+    cat > "$ROOTFS/usr/share/applications/code.desktop" << 'DESKTOP'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=VS Code
+Comment=Visual Studio Code
+Exec=code-desktop
+Icon=com.visualstudio.code
+Terminal=false
+Categories=Development;IDE;
+DESKTOP
+
+    mark_done 11
+fi
+
+# ─── Step 12: Install VS Code (optional) ─────────────────
+if ! checkpoint 12 "Install Visual Studio Code"; then
     info "Installing VS Code for arm64 (this takes a while)…"
     UDOCKER_USE_PROOT_EXECUTABLE=/data/data/com.termux/files/usr/bin/proot \
     LD_PRELOAD= \
@@ -368,7 +403,7 @@ if ! checkpoint 11 "Install Visual Studio Code"; then
     if [ -f "$ROOTFS/var/lib/dpkg/statoverride" ]; then
         : > "$ROOTFS/var/lib/dpkg/statoverride"
     fi
-    mark_done 11
+    mark_done 12
 fi
 
 echo ""
