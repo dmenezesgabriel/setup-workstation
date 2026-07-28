@@ -415,6 +415,20 @@ if ! checkpoint 12 "Install Visual Studio Code"; then
     mark_done 12
 fi
 
+# ─── Step 13: Install OpenCode CLI (optional) ────────────
+if ! checkpoint 13 "Install OpenCode CLI"; then
+    info "Installing OpenCode (AI coding agent)…"
+    UDOCKER_USE_PROOT_EXECUTABLE=/data/data/com.termux/files/usr/bin/proot \
+    LD_PRELOAD= \
+    udocker run --user=root --env=DEBIAN_FRONTEND=noninteractive \
+        "$CONTAINER_NAME" \
+        bash -c '
+            apt-get install -y -qq curl ca-certificates && \
+            curl -fsSL https://opencode.ai/install | bash
+        ' 2>&1 | tee -a "$LOG"
+    mark_done 13
+fi
+
 # ─── Unconditional fixes (applied every run, idempotent) ──
 # These can't be gated behind checkpoints because a checkpoint
 # that already completed won't re-run if the script is updated.
