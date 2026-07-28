@@ -63,7 +63,9 @@ fi
 CONTAINER_NAME="debian-desktop"
 if ! checkpoint 3 "udocker create $CONTAINER_NAME"; then
     info "Pulling and creating Debian container…"
-    udocker create --name="$CONTAINER_NAME" debian:bookworm-slim 2>&1 | tee -a "$LOG"
+    udocker create --name="$CONTAINER_NAME" debian:bookworm-slim 2>&1 | tee -a "$LOG" || {
+        warn "Container creation failed (may already exist). Continuing…"
+    }
     mark_done 3
 fi
 
