@@ -43,11 +43,18 @@ mark_done() {
 fix_dpkg_status() {
     local rootfs="$1"
     local dpkg_dir="$rootfs/var/lib/dpkg"
-    # Find the latest l2s fragment (largest .000N suffix)
+
+    # Clear statoverride — dpkg's postinst scripts may add entries
+    # referencing groups (like messagebus) that don't exist yet when
+    # packages are installed piecemeal. This causes an unrecoverable
+    # fatal error.
+    : > "$dpkg_dir/statoverride" 2>/dev/null || true
+
+    # Restore /var/lib/dpkg/status as a real file if proot's
+    # link2symlink (l2s) replaced it with a symlink chain.
     local l2s_file
     l2s_file=$(ls -1 "$dpkg_dir"/.l2s.status*.0001 2>/dev/null | sort -t. -k1,2 | tail -1)
     if [ -z "$l2s_file" ]; then
-        # No l2s-managed status — nothing to do
         return
     fi
     info "l2s-managed status detected at $l2s_file — restoring as real file"
@@ -144,6 +151,7 @@ if ! checkpoint 7 "Install XFCE + VNC + noVNC"; then
     udocker run --user=root --env=DEBIAN_FRONTEND=noninteractive \
         "$CONTAINER_NAME" \
         bash -c '
+            : > /var/lib/dpkg/statoverride
             apt-get update -qq
             apt-get install -y \
                 xfce4-session xfce4-panel xfdesktop4 \
