@@ -457,6 +457,12 @@ if ! grep -q 'code-desktop' "$ROOTFS/root/.bashrc" 2>/dev/null; then
     echo "alias code-desktop='code --no-sandbox --disable-gpu --disable-dev-shm-usage --user-data-dir=/root/.vscode-data'" >> "$ROOTFS/root/.bashrc"
 fi
 
+# Symlink opencode into /usr/local/bin so it's always on PATH
+# (the installer puts it in ~/.opencode/bin which may not be inherited)
+if [ -x "$ROOTFS/root/.opencode/bin/opencode" ]; then
+    ln -sf /root/.opencode/bin/opencode "$ROOTFS/usr/local/bin/opencode"
+fi
+
 echo ""
 echo "═══════════════════════════════════════════════════════"
 echo "  Setup complete!"
