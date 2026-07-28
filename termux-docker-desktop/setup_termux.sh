@@ -119,7 +119,8 @@ if ! checkpoint 7 "Install XFCE + VNC + noVNC"; then
         apt-get install -y \
             xfce4-session xfce4-panel xfdesktop4 \
             xfce4-settings xfce4-terminal xfwm4 \
-            x11vnc novnc xvfb python3-websockify dbus-x11 2>&1 | tee -a "$LOG"
+            x11vnc novnc xvfb python3-websockify dbus-x11 \
+            xdotool scrot imagemagick 2>&1 | tee -a "$LOG"
 
     # Fix statoverride file if needed (Android /data blocks link())
     if [ -f "$ROOTFS/var/lib/dpkg/statoverride" ]; then
@@ -345,6 +346,29 @@ if ! checkpoint 10 "Add ~/.local/bin to PATH"; then
         echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ZSHRC"
     fi
     mark_done 10
+fi
+
+# ─── Step 11: Install VS Code (optional) ─────────────────
+if ! checkpoint 11 "Install Visual Studio Code"; then
+    info "Installing VS Code for arm64 (this takes a while)…"
+    UDOCKER_USE_PROOT_EXECUTABLE=/data/data/com.termux/files/usr/bin/proot \
+    LD_PRELOAD= \
+    udocker run --user=root --env=DEBIAN_FRONTEND=noninteractive \
+        "$CONTAINER_NAME" \
+        bash -c '
+            apt-get install -y wget gpg && \
+            wget -qO- https://packages.microsoft.com/keys/microsoft.asc \
+                | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg && \
+            echo "deb [arch=arm64] https://packages.microsoft.com/repos/code stable main" \
+                > /etc/apt/sources.list.d/vscode.list && \
+            apt-get update -qq && \
+            apt-get install -y code
+        ' 2>&1 | tee -a "$LOG"
+
+    if [ -f "$ROOTFS/var/lib/dpkg/statoverride" ]; then
+        : > "$ROOTFS/var/lib/dpkg/statoverride"
+    fi
+    mark_done 11
 fi
 
 echo ""
