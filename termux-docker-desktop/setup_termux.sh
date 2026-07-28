@@ -115,15 +115,23 @@ fi
 # ─── Step 7: Install desktop packages ───────────────────
 if ! checkpoint 7 "Install XFCE + VNC + noVNC"; then
     info "Installing XFCE desktop, x11vnc, noVNC, xvfb… (this takes a while)"
+
+    # dpkg may exit non-zero because Android /data blocks the status-old
+    # backup; packages are still installed. Swallow the exit code and fix
+    # the state files afterwards.
     UDOCKER_USE_PROOT_EXECUTABLE=/data/data/com.termux/files/usr/bin/proot \
     LD_PRELOAD= \
     udocker run --user=root --env=DEBIAN_FRONTEND=noninteractive \
         "$CONTAINER_NAME" \
-        apt-get install -y \
-            xfce4-session xfce4-panel xfdesktop4 \
-            xfce4-settings xfce4-terminal xfwm4 \
-            x11vnc novnc xvfb python3-websockify dbus-x11 \
-            xdotool scrot imagemagick curl ca-certificates 2>&1 | tee -a "$LOG"
+        bash -c '
+            apt-get install -y \
+                xfce4-session xfce4-panel xfdesktop4 \
+                xfce4-settings xfce4-terminal xfwm4 \
+                x11vnc novnc xvfb python3-websockify dbus-x11 \
+                xdotool scrot imagemagick curl ca-certificates \
+            || true
+            dpkg --configure -a || true
+        ' 2>&1 | tee -a "$LOG"
 
     # Fix statoverride + status-old (Android /data blocks link() and rename())
     for f in statoverride status-old; do
