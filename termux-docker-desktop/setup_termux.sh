@@ -37,7 +37,8 @@ mark_done() {
 # ─── Step 0: Basic environment ──────────────────────────
 if ! checkpoint 0 "System packages (python, git)"; then
     apt-get update -y
-    apt-get install -y python3 python3-pip git openssh
+    # Termux packages: python includes pip; openssh is a separate package
+    apt-get install -y python git openssh
     mark_done 0
 fi
 
