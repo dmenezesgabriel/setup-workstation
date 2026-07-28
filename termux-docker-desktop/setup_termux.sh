@@ -123,12 +123,14 @@ if ! checkpoint 7 "Install XFCE + VNC + noVNC"; then
             xfce4-session xfce4-panel xfdesktop4 \
             xfce4-settings xfce4-terminal xfwm4 \
             x11vnc novnc xvfb python3-websockify dbus-x11 \
-            xdotool scrot imagemagick 2>&1 | tee -a "$LOG"
+            xdotool scrot imagemagick curl ca-certificates 2>&1 | tee -a "$LOG"
 
-    # Fix statoverride file if needed (Android /data blocks link())
-    if [ -f "$ROOTFS/var/lib/dpkg/statoverride" ]; then
-        : > "$ROOTFS/var/lib/dpkg/statoverride"
-    fi
+    # Fix statoverride + status-old (Android /data blocks link() and rename())
+    for f in statoverride status-old; do
+        if [ -f "$ROOTFS/var/lib/dpkg/$f" ]; then
+            : > "$ROOTFS/var/lib/dpkg/$f"
+        fi
+    done
     mark_done 7
 fi
 
@@ -412,9 +414,11 @@ if ! checkpoint 12 "Install Visual Studio Code"; then
             apt-get install -y code
         ' 2>&1 | tee -a "$LOG"
 
-    if [ -f "$ROOTFS/var/lib/dpkg/statoverride" ]; then
-        : > "$ROOTFS/var/lib/dpkg/statoverride"
-    fi
+    for f in statoverride status-old; do
+        if [ -f "$ROOTFS/var/lib/dpkg/$f" ]; then
+            : > "$ROOTFS/var/lib/dpkg/$f"
+        fi
+    done
     mark_done 12
 fi
 
@@ -423,10 +427,9 @@ if ! checkpoint 13 "Install OpenCode CLI"; then
     info "Installing OpenCode (AI coding agent)…"
     UDOCKER_USE_PROOT_EXECUTABLE=/data/data/com.termux/files/usr/bin/proot \
     LD_PRELOAD= \
-    udocker run --user=root --env=DEBIAN_FRONTEND=noninteractive \
+    udocker run --user=root \
         "$CONTAINER_NAME" \
         bash -c '
-            apt-get install -y -qq curl ca-certificates && \
             curl -fsSL https://opencode.ai/install | bash
         ' 2>&1 | tee -a "$LOG"
     mark_done 13
@@ -446,6 +449,13 @@ mkdir -p /root/.vscode-data
 exec code --no-sandbox --disable-gpu --disable-dev-shm-usage --user-data-dir=/root/.vscode-data "$@"
 WRAPPER
 chmod 755 "$ROOTFS/usr/local/bin/code-desktop"
+
+# Fix dpkg state files (Android /data blocks link()/rename())
+for f in statoverride status-old; do
+    if [ -f "$ROOTFS/var/lib/dpkg/$f" ]; then
+        : > "$ROOTFS/var/lib/dpkg/$f"
+    fi
+done
 
 # Ensure DISPLAY is in shell profiles
 if ! grep -q 'DISPLAY=:99' "$ROOTFS/root/.bashrc" 2>/dev/null; then
