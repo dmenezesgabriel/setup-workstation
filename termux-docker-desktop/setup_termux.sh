@@ -34,6 +34,28 @@ mark_done() {
     : > "$XDG_HOME/.udocker-desktop/.step_$step"
 }
 
+# Restore /var/lib/dpkg/status as a real file if proot's
+# link2symlink (l2s) replaced it with a symlink chain.
+# dpkg's backup_status_file() tries rename() followed by
+# link(), and both fail when status is l2s-managed on Android
+# F2FS (link() unsupported, rename() blocked by proot).
+# Must be run on the HOST side.
+fix_dpkg_status() {
+    local rootfs="$1"
+    local dpkg_dir="$rootfs/var/lib/dpkg"
+    # Find the latest l2s fragment (largest .000N suffix)
+    local l2s_file
+    l2s_file=$(ls -1 "$dpkg_dir"/.l2s.status*.0001 2>/dev/null | sort -t. -k1,2 | tail -1)
+    if [ -z "$l2s_file" ]; then
+        # No l2s-managed status — nothing to do
+        return
+    fi
+    info "l2s-managed status detected at $l2s_file — restoring as real file"
+    cp "$l2s_file" "$dpkg_dir/status"
+    rm -f "$dpkg_dir"/.l2s.status*
+    chmod 644 "$dpkg_dir/status"
+}
+
 # ─── Step 0: Basic environment ──────────────────────────
 if ! checkpoint 0 "System packages (python, git)"; then
     apt-get update -y
@@ -115,15 +137,14 @@ fi
 # ─── Step 7: Install desktop packages ───────────────────
 if ! checkpoint 7 "Install XFCE + VNC + noVNC"; then
     info "Installing XFCE desktop, x11vnc, noVNC, xvfb… (this takes a while)"
+    fix_dpkg_status "$ROOTFS"
 
-    # dpkg may exit non-zero because Android /data blocks the status-old
-    # backup; packages are still installed. Swallow the exit code and fix
-    # the state files afterwards.
     UDOCKER_USE_PROOT_EXECUTABLE=/data/data/com.termux/files/usr/bin/proot \
     LD_PRELOAD= \
     udocker run --user=root --env=DEBIAN_FRONTEND=noninteractive \
         "$CONTAINER_NAME" \
         bash -c '
+            apt-get update -qq
             apt-get install -y \
                 xfce4-session xfce4-panel xfdesktop4 \
                 xfce4-settings xfce4-terminal xfwm4 \
@@ -133,12 +154,6 @@ if ! checkpoint 7 "Install XFCE + VNC + noVNC"; then
             dpkg --configure -a || true
         ' 2>&1 | tee -a "$LOG"
 
-    # Fix statoverride + status-old (Android /data blocks link() and rename())
-    for f in statoverride status-old; do
-        if [ -f "$ROOTFS/var/lib/dpkg/$f" ]; then
-            : > "$ROOTFS/var/lib/dpkg/$f"
-        fi
-    done
     mark_done 7
 fi
 
@@ -239,7 +254,7 @@ cmd_start() {
     echo "Starting desktop container…"
 
     nohup bash -c \
-        "LD_PRELOAD= UDOCKER_USE_PROOT_EXECUTABLE=$PROOT udocker run --rm --user=root \
+        "LD_PRELOAD= UDOCKER_USE_PROOT_EXECUTABLE=$PROOT udocker run --user=root \
             --env=DISPLAY=:99 \
             \"$cid\" \
             /usr/local/bin/entrypoint.sh" \
@@ -396,6 +411,7 @@ fi
 # ─── Step 12: Install VS Code (optional) ─────────────────
 if ! checkpoint 12 "Install Visual Studio Code"; then
     info "Installing VS Code for arm64 (this takes a while)…"
+    fix_dpkg_status "$ROOTFS"
     UDOCKER_USE_PROOT_EXECUTABLE=/data/data/com.termux/files/usr/bin/proot \
     LD_PRELOAD= \
     udocker run --user=root --env=DEBIAN_FRONTEND=noninteractive \
@@ -409,12 +425,6 @@ if ! checkpoint 12 "Install Visual Studio Code"; then
             apt-get update -qq && \
             apt-get install -y code
         ' 2>&1 | tee -a "$LOG"
-
-    for f in statoverride status-old; do
-        if [ -f "$ROOTFS/var/lib/dpkg/$f" ]; then
-            : > "$ROOTFS/var/lib/dpkg/$f"
-        fi
-    done
     mark_done 12
 fi
 
@@ -436,6 +446,8 @@ fi
 # that already completed won't re-run if the script is updated.
 info "Applying idempotent environment fixes…"
 
+fix_dpkg_status "$ROOTFS"
+
 echo "DISPLAY=:99" > "$ROOTFS/etc/environment"
 
 # Re-ensure the wrapper script exists (it's tiny, no cost to rewrite)
@@ -445,13 +457,6 @@ mkdir -p /root/.vscode-data
 exec code --no-sandbox --disable-gpu --disable-dev-shm-usage --user-data-dir=/root/.vscode-data "$@"
 WRAPPER
 chmod 755 "$ROOTFS/usr/local/bin/code-desktop"
-
-# Fix dpkg state files (Android /data blocks link()/rename())
-for f in statoverride status-old; do
-    if [ -f "$ROOTFS/var/lib/dpkg/$f" ]; then
-        : > "$ROOTFS/var/lib/dpkg/$f"
-    fi
-done
 
 # Ensure DISPLAY is in shell profiles
 if ! grep -q 'DISPLAY=:99' "$ROOTFS/root/.bashrc" 2>/dev/null; then
